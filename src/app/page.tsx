@@ -33,7 +33,6 @@ export default function HomePage() {
         mobileSrc="/media/campaign/look1.webp"
         mobileWidth={1400}
         mobileHeight={2100}
-        minHeight="100svh"
       />
 
       {/* ── Editorial split — Saison Trois ── */}
