@@ -4,20 +4,19 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 
 /**
- * Hero — stage épinglé (sticky) + signature centrée + effet de plongée.
+ * Hero — stage épinglé (sticky) + signature centrée + plongée parallax.
  *
  * POURQUOI sticky : sur iOS `100svh` ≠ `window.innerHeight` (barre d'adresse),
- * ce qui cassait l'ancien centrage JS (signature décalée, « deux hero »,
- * scroll saccadé). Ici le stage est `position: sticky; height: 100dvh` et la
- * signature est centrée en pur CSS (flex) → toujours parfaitement au milieu,
- * desktop comme mobile.
+ * ce qui cassait l'ancien centrage JS. Ici le stage est `sticky; height:100dvh`
+ * et la signature est centrée en pur CSS (flex) → toujours au milieu, partout.
  *
- * EFFET : pendant que le stage est épinglé, l'image MONTE et zoome légèrement
- * derrière la signature fixe → elle paraît « plonger » dans l'image.
+ * EFFET : pendant que le stage est épinglé, l'image MONTE et zoome derrière la
+ * signature fixe → elle paraît « plonger » dans l'image. Au scroll, des
+ * traînées de scratch (rugueuses, métalliques) se gravent sur le fond comme si
+ * la signature raclait la matière en s'enfonçant.
  *
- * La section mesure 150dvh : ~50dvh de scroll épinglé pour dérouler l'effet,
- * puis on relâche vers la suite. Tout est piloté par la progression réelle de
- * la section (indépendant des unités de viewport).
+ * `--scratch` (0→1) est posé sur le stage à chaque frame et pilote l'apparition
+ * et la longueur des scratchs (stroke-dashoffset + opacity).
  */
 
 interface HeroProps {
@@ -33,13 +32,15 @@ interface HeroProps {
 
 export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const section = sectionRef.current;
+    const stage = stageRef.current;
     const img = imgRef.current;
-    if (!section || !img) return;
+    if (!section || !stage || !img) return;
 
     let raf = 0;
     const tick = () => {
@@ -48,7 +49,8 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
       const total = section.offsetHeight - window.innerHeight; // distance épinglée
       const p = total > 0 ? Math.min(Math.max(-rect.top / total, 0), 1) : 0;
       // Base scale 1.16 → l'image reste couvrante même translatée vers le haut.
-      img.style.transform = `translate3d(0, ${(-p * 6).toFixed(2)}%, 0) scale(${(1.16 + p * 0.06).toFixed(3)})`;
+      img.style.transform = `translate3d(0, ${(-p * 6).toFixed(2)}%, 0) scale(${(1.16 + p * 0.07).toFixed(3)})`;
+      stage.style.setProperty("--scratch", p.toFixed(3));
     };
 
     const onScroll = () => {
@@ -68,7 +70,7 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
   return (
     <section ref={sectionRef} aria-label="Hero" className="relative -mt-14" style={{ height: "150dvh" }}>
       {/* Stage épinglé — remplit toujours le viewport réel */}
-      <div className="sticky top-0 h-[100dvh] overflow-hidden">
+      <div ref={stageRef} className="sticky top-0 h-[100dvh] overflow-hidden">
         {/* Image (monte + zoome) */}
         <div
           ref={imgRef}
@@ -99,62 +101,28 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
 }
 
 /* ============================================================
-   SignatureFX — signature « rotten » + traces de friction +
-   étincelles aux extrémités réelles du glyphe.
+   SignatureFX — signature « rotten » + traînées de scratch.
 
    Le SVG partage le viewBox intrinsèque du PNG (1701×936) et se
-   superpose pixel-perfect à l'image → les ancres tombent juste.
+   superpose pixel-perfect → les scratchs partent des points réels.
 
    - Filtre `sig-rough` (turbulence + displacement) : strokes
-     irréguliers, non linéaires = traces de friction grattées.
-   - Étincelles : grappes de rayons + cœur lumineux qui scintillent
-     sur les pointes (gauche, bas-gauche, pic central, haut-droite,
-     arc bas-droite) + particules qui s'envolent.
+     irréguliers, non linéaires = scratch gravé dans la matière.
+   - Les scratchs montent au-dessus du glyphe (traînée de la
+     « plongée ») et grattent sous les pointes basses. Leur longueur
+     et leur opacité suivent `--scratch` (0→1) piloté par le scroll.
    ============================================================ */
 
-// Extrémités détectées via le canal alpha du PNG (viewBox 1701×936)
-const SPARKS: { x: number; y: number; delay: number; scale: number }[] = [
-  { x: 12, y: 386, delay: 0.0, scale: 1.0 }, // pointe gauche (longue diagonale)
-  { x: 270, y: 448, delay: 0.9, scale: 0.85 }, // bas-gauche
-  { x: 844, y: 58, delay: 1.5, scale: 0.8 }, // pic central (T)
-  { x: 1188, y: 20, delay: 0.5, scale: 0.9 }, // points haut-droite
-  { x: 1680, y: 786, delay: 1.2, scale: 1.05 }, // arc bas-droite
+// Traînées de scratch : [d, largeur, opacité max]. Coordonnées viewBox 1701×936.
+// Au-dessus du glyphe = traînée de plongée ; en dessous = grattage des pointes.
+const SCRATCHES: { d: string; w: number; o: number }[] = [
+  { d: "M486 150 C 470 -40, 476 -180, 458 -360", w: 3.4, o: 0.8 }, // au-dessus, gauche-centre
+  { d: "M846 62 C 852 -120, 844 -300, 858 -460", w: 4, o: 0.92 }, // T central, traînée la plus longue
+  { d: "M1032 70 C 1044 -90, 1036 -240, 1052 -380", w: 3.2, o: 0.8 }, // au-dessus, droite
+  { d: "M1300 120 C 1316 -20, 1306 -150, 1322 -300", w: 2.8, o: 0.65 }, // au-dessus, points
+  { d: "M268 452 C 214 520, 168 580, 120 668", w: 3, o: 0.7 }, // grattage bas-gauche
+  { d: "M1672 792 C 1716 852, 1742 902, 1772 968", w: 3.4, o: 0.78 }, // grattage arc bas-droite
 ];
-
-// Particules qui s'envolent (tx/ty = trajectoire en unités viewBox)
-const PARTICLES: { x: number; y: number; tx: number; ty: number; delay: number; r: number }[] = [
-  { x: 1680, y: 786, tx: 70, ty: 60, delay: 0.2, r: 5 },
-  { x: 1680, y: 786, tx: 30, ty: 90, delay: 1.1, r: 4 },
-  { x: 270, y: 448, tx: -80, ty: 50, delay: 0.6, r: 5 },
-  { x: 12, y: 386, tx: -90, ty: 20, delay: 1.4, r: 4 },
-  { x: 844, y: 58, tx: 10, ty: -70, delay: 1.9, r: 4 },
-];
-
-// Rayons d'une étincelle (dx, dy depuis la pointe)
-const RAYS: [number, number][] = [
-  [0, -46],
-  [34, -26],
-  [44, 8],
-  [-40, -18],
-  [-28, 30],
-  [16, 40],
-];
-
-function Spark({ x, y, delay, scale }: { x: number; y: number; delay: number; scale: number }) {
-  return (
-    <g
-      transform={`translate(${x} ${y}) scale(${scale})`}
-      className="sig-spark"
-      style={{ animationDelay: `${delay}s` }}
-    >
-      {RAYS.map(([dx, dy], i) => (
-        <line key={i} x1={0} y1={0} x2={dx} y2={dy} stroke="#ffdca6" strokeWidth={4.5} strokeLinecap="round" />
-      ))}
-      <circle r={13} fill="#f4b25e" opacity={0.45} />
-      <circle r={6} fill="#fff7e8" />
-    </g>
-  );
-}
 
 function SignatureFX({ mobileSigSrc }: { mobileSigSrc?: string }) {
   const sig = mobileSigSrc ?? "/brand/signature-rotten.png";
@@ -181,7 +149,7 @@ function SignatureFX({ mobileSigSrc }: { mobileSigSrc?: string }) {
         style={{ filter: "drop-shadow(0 2px 18px rgba(0,0,0,0.55))" }}
       />
 
-      {/* Overlay friction + étincelles — calé sur l'image */}
+      {/* Overlay scratch — calé sur l'image, piloté par --scratch */}
       <svg
         viewBox="0 0 1701 936"
         className="absolute inset-0 h-full w-full"
@@ -190,61 +158,36 @@ function SignatureFX({ mobileSigSrc }: { mobileSigSrc?: string }) {
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          <filter id="sig-rough" x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.018 0.026" numOctaves={2} seed={7} result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale={11} xChannelSelector="R" yChannelSelector="G" />
+          <filter id="sig-rough" x="-40%" y="-60%" width="180%" height="220%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.014 0.05" numOctaves={2} seed={11} result="n" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale={6} xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
 
-        {/* Traces de friction — strokes irréguliers grattés sur le fond */}
-        <g
-          className="sig-friction"
-          fill="none"
-          stroke="#d9b483"
-          strokeWidth={3.2}
-          strokeLinecap="round"
-          filter="url(#sig-rough)"
-          style={{ filter: "url(#sig-rough)" }}
-        >
-          {/* sous la pointe gauche, vers l'extérieur */}
-          <path d="M40 392 C -40 404, -110 416, -170 410" opacity={0.7} />
-          {/* bas-gauche, grattage descendant */}
-          <path d="M290 452 C 210 500, 150 540, 96 612" opacity={0.6} />
-          {/* arc bas-droite, étincelles de friction */}
-          <path d="M1660 792 C 1716 836, 1758 876, 1792 932" opacity={0.7} />
-          <path d="M1610 800 C 1648 854, 1672 892, 1684 940" opacity={0.45} />
-          {/* ligne de grattage le long de la base */}
-          <path d="M360 720 C 720 770, 1080 772, 1420 716" opacity={0.28} strokeWidth={2.2} />
-        </g>
-
-        {/* Particules qui s'envolent */}
-        <g
-          style={{
-            filter: "drop-shadow(0 0 4px rgba(255,200,120,0.9)) drop-shadow(0 0 10px rgba(214,120,40,0.5))",
-          }}
-        >
-          {PARTICLES.map((p, i) => (
-            <g key={i} transform={`translate(${p.x} ${p.y})`}>
-              <circle
-                className="sig-particle"
-                cx={0}
-                cy={0}
-                r={p.r}
-                fill="#ffe6b8"
-                style={{ ["--tx" as string]: `${p.tx}px`, ["--ty" as string]: `${p.ty}px`, animationDelay: `${p.delay}s` }}
+        {/* Traînées de scratch (gravées sur le fond) */}
+        <g fill="none" strokeLinecap="round" filter="url(#sig-rough)">
+          {SCRATCHES.map((s, i) => (
+            <g key={i} style={{ opacity: `calc(var(--scratch, 0) * ${s.o})` }}>
+              {/* ombre creusée (sombre) */}
+              <path
+                d={s.d}
+                stroke="#000"
+                strokeOpacity={0.4}
+                strokeWidth={s.w + 1.6}
+                pathLength={1}
+                strokeDasharray={1}
+                style={{ strokeDashoffset: "calc(1 - var(--scratch, 0))" }}
+              />
+              {/* arête éclaircie (métal mis à nu) */}
+              <path
+                d={s.d}
+                stroke="#efe9dc"
+                strokeWidth={s.w}
+                pathLength={1}
+                strokeDasharray={1}
+                style={{ strokeDashoffset: "calc(1 - var(--scratch, 0))" }}
               />
             </g>
-          ))}
-        </g>
-
-        {/* Étincelles aux extrémités */}
-        <g
-          style={{
-            filter: "drop-shadow(0 0 5px rgba(255,205,130,0.95)) drop-shadow(0 0 13px rgba(214,120,40,0.55))",
-          }}
-        >
-          {SPARKS.map((s, i) => (
-            <Spark key={i} {...s} />
           ))}
         </g>
       </svg>
