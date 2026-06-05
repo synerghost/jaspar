@@ -5,6 +5,7 @@ import type { Product } from "@/data/types";
 import { getProduct } from "@/data/products";
 import { getCollection } from "@/data/collections";
 import { useLocale } from "@/lib/i18n";
+import { titleCase } from "@/lib/format";
 import { Container } from "./Layout";
 import { ProductGallery } from "./ProductGallery";
 import { ProductBuyBox } from "./ProductBuyBox";
@@ -33,7 +34,7 @@ export function ProductDetail({ product }: { product: Product }) {
             <span aria-hidden>/</span>
           </>
         )}
-        <span className="text-ink">{product.name}</span>
+        <span className="text-ink">{titleCase(product.name)}</span>
       </nav>
 
       <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
@@ -46,7 +47,7 @@ export function ProductDetail({ product }: { product: Product }) {
             {product.soldOut && <Badge tone="muted">{t("badge.soldOut")}</Badge>}
           </div>
 
-          <h1 className="display text-3xl md:text-4xl">{product.name}</h1>
+          <h1 className="display text-3xl md:text-4xl">{titleCase(product.name)}</h1>
           <p className="mt-4 max-w-md text-stone-700">{product.description}</p>
 
           <div className="mt-8">

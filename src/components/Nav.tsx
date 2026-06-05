@@ -66,14 +66,32 @@ export function Nav() {
           ))}
         </ul>
 
-        {/* Mobile menu toggle */}
+        {/* Mobile menu toggle — burger icon */}
         <button
-          className="label-caps md:hidden"
+          className="flex h-10 w-10 flex-col items-center justify-center gap-[5px] md:hidden"
           onClick={() => setMenuOpen((v) => !v)}
           aria-expanded={menuOpen}
           aria-controls="mobile-menu"
+          aria-label={menuOpen ? t("nav.close") : t("nav.menu")}
         >
-          {menuOpen ? t("nav.close") : t("nav.menu")}
+          <span
+            className={clsx(
+              "block h-px w-5 bg-ink transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              menuOpen && "translate-y-[6px] rotate-45",
+            )}
+          />
+          <span
+            className={clsx(
+              "block h-px w-5 bg-ink transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              menuOpen && "opacity-0",
+            )}
+          />
+          <span
+            className={clsx(
+              "block h-px w-5 bg-ink transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              menuOpen && "-translate-y-[6px] -rotate-45",
+            )}
+          />
         </button>
 
         {/* Centre — real logo mark */}

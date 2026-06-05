@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Product } from "@/data/types";
 import { useLocale } from "@/lib/i18n";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, titleCase } from "@/lib/format";
 import { Media } from "./Media";
 import { Badge } from "./Badge";
 import { QuickView } from "./QuickView";
@@ -50,7 +50,7 @@ export function ProductCard({ product, priority }: { product: Product; priority?
       <div className="mt-3 flex items-baseline justify-between gap-3">
         <h3 className="text-sm">
           <Link href={`/product/${product.slug}`} className="link-underline">
-            {product.name}
+            {titleCase(product.name)}
           </Link>
         </h3>
         <p className="shrink-0 text-sm text-stone-600">

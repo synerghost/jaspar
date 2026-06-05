@@ -17,7 +17,7 @@ export default function AboutPage() {
         <Container>
           <Reveal className="max-w-3xl">
             <span className="eyebrow">Studio · Paris</span>
-            <h1 className="display mt-6 text-[clamp(2.5rem,8vw,6rem)]">
+            <h1 className="display mt-6 text-[clamp(2rem,6vw,5rem)]">
               {fr
                 ? "Notre vision de la mode s'établit au-delà du vêtement."
                 : "Our vision of fashion is established beyond clothing."}
@@ -46,7 +46,7 @@ export default function AboutPage() {
         <Container>
           <div className="grid gap-16 md:grid-cols-2 md:gap-24">
             <Reveal>
-              <h2 className="display text-3xl md:text-4xl">
+              <h2 className="display text-2xl md:text-3xl">
                 {fr ? "Fait à la commande." : "Made to order."}
               </h2>
               <p className="mt-6 text-stone-700 leading-relaxed">

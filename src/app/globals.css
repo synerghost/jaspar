@@ -74,13 +74,13 @@ body {
   color: var(--color-stone-500);
 }
 
-/* Display — heavy compressed grotesque headlines */
+/* Display — heavy grotesque headlines, mixed case */
 .display {
   font-family: var(--font-sans);
   font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 0.92;
-  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.93;
+  /* No forced uppercase — the designer controls case per headline */
 }
 
 /* Animated underline link */

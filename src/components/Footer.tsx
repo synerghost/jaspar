@@ -43,6 +43,18 @@ export function Footer() {
           <ul className="flex flex-col gap-2">
             <li><Link href="/about" className="text-sm text-stone-600 link-underline">{t("nav.about")}</Link></li>
             <li><Link href="/contact" className="text-sm text-stone-600 link-underline">{t("nav.contact")}</Link></li>
+            <li>
+              <a href="https://instagram.com/j4spar" target="_blank" rel="noopener noreferrer"
+                className="text-sm text-stone-600 link-underline">
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a href="https://www.tiktok.com/@jaspar.studio" target="_blank" rel="noopener noreferrer"
+                className="text-sm text-stone-600 link-underline">
+                TikTok
+              </a>
+            </li>
           </ul>
         </nav>
 

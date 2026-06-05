@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Product } from "@/data/types";
 import { useLocale } from "@/lib/i18n";
+import { titleCase } from "@/lib/format";
 import { Drawer } from "./Drawer";
 import { Media } from "./Media";
 import { ProductBuyBox } from "./ProductBuyBox";
@@ -37,7 +38,7 @@ export function QuickView({
         />
         <h2 className="display mb-4 text-2xl">
           <Link href={`/product/${product.slug}`} onClick={onClose} className="link-underline">
-            {product.name}
+            {titleCase(product.name)}
           </Link>
         </h2>
         <ProductBuyBox product={product} />
