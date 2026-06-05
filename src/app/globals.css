@@ -134,3 +134,71 @@ body {
 .hero-parallax {
   will-change: transform;
 }
+
+/* ── Signature : friction & étincelles ─────────────────────── */
+.sig-spark {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.sig-particle {
+  opacity: 0;
+}
+.sig-friction {
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sig-spark {
+    animation: sig-twinkle 2.6s var(--ease-editorial) infinite;
+  }
+  .sig-particle {
+    animation: sig-fly 2.9s ease-out infinite;
+  }
+  .sig-friction {
+    animation: sig-flicker 4s ease-in-out infinite;
+  }
+}
+
+@keyframes sig-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  35% {
+    opacity: 0.2;
+  }
+  55% {
+    opacity: 0.95;
+  }
+  80% {
+    opacity: 0.15;
+  }
+}
+
+@keyframes sig-fly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx, 60px), var(--ty, 60px)) scale(0.25);
+  }
+}
+
+@keyframes sig-flicker {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
