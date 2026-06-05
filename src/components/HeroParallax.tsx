@@ -39,12 +39,27 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
   const logoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const section = sectionRef.current;
     const stage = stageRef.current;
     const img = imgRef.current;
     const logo = logoRef.current;
     if (!section || !stage || !img || !logo) return;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Hauteurs depuis innerHeight (= viewport réel). Sur iOS `dvh` peut ne PAS
+    // correspondre à innerHeight → gap sous le hero + logo décentré.
+    //  · stage = innerHeight à chaque resize → remplit toujours l'écran (0 gap)
+    //  · section = innerHeight × 1.65 SEULEMENT au changement de largeur
+    //    (orientation) → la hauteur scrollable ne bouge pas quand la barre
+    //    d'adresse iOS s'affiche/se masque → scroll fluide, sans saut.
+    let baseW = window.innerWidth;
+    const setHeights = (withSection: boolean) => {
+      const vh = window.innerHeight;
+      stage.style.height = `${vh}px`;
+      if (withSection) section.style.height = `${Math.round(vh * 1.65)}px`;
+    };
+    setHeights(true);
 
     let raf = 0;
     const tick = () => {
@@ -70,13 +85,21 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(tick);
     };
+    const onResize = () => {
+      const widthChanged = window.innerWidth !== baseW;
+      baseW = window.innerWidth;
+      setHeights(widthChanged); // stage toujours ; section seulement si orientation
+      onScroll();
+    };
 
-    tick();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
+    if (!reduce) {
+      tick();
+      window.addEventListener("scroll", onScroll, { passive: true });
+    }
     return () => {
+      window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
