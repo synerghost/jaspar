@@ -1,29 +1,36 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 
 /**
- * Hero plein-écran avec :
- * - Parallax : l'image glisse à 35% de la vitesse de scroll (vers le bas)
- * - Signature : overlay transparent qui se révèle à l'entrée de la page
- *   puis monte légèrement et s'efface en scrollant — effet artistique éditorial
- * - Image responsive : desktop (paysage) / mobile (portrait)
+ * Hero plein-écran avec deux couches parallax.
  *
- * Aucun texte ni bouton dans le composant — conformément au brief.
+ * LAYER 1 — Image de fond
+ *   translateY = +scrollY × 0.28 → reste "derrière" pendant le scroll
+ *
+ * LAYER 2 — Signature
+ *   Position initiale : bas du hero (juste visible, 50% de hauteur en dehors)
+ *   Au scroll elle monte : sigY = 38vh − scroll × 100/heroH
+ *   → scroll=0    : bottom du hero, à peine visible
+ *   → scroll=38%  : centrée dans le cadre
+ *   → scroll=80%  : sort par le haut
+ *
+ *   overflow:hidden sur la section → clipping propre en haut et en bas.
+ *   mix-blend-mode: difference → blanc inversé sur l'image = très lisible.
+ *
+ * Hero height = 120svh pour laisser le temps de voir l'animation complète.
  */
 
 interface HeroProps {
-  /** Image desktop (paysage) */
   src: string;
   alt: string;
   width: number;
   height: number;
-  /** Image mobile optionnelle (portrait). Si absente = src */
   mobileSrc?: string;
   mobileWidth?: number;
   mobileHeight?: number;
-  minHeight?: string;
+  mobileSigSrc?: string;
 }
 
 export function HeroParallax({
@@ -34,111 +41,112 @@ export function HeroParallax({
   mobileSrc,
   mobileWidth,
   mobileHeight,
-  minHeight = "100svh",
+  mobileSigSrc,
 }: HeroProps) {
   const imgRef = useRef<HTMLDivElement>(null);
   const sigRef = useRef<HTMLDivElement>(null);
-  const [entered, setEntered] = useState(false);
 
-  const prefersReduced =
-    typeof window !== "undefined"
-      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      : false;
-
-  // Reveal de la signature à l'entrée (légère montée + fade-in)
   useEffect(() => {
-    const t = setTimeout(() => setEntered(true), 120);
-    return () => clearTimeout(t);
-  }, []);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  // Parallax image + signature qui remonte au scroll
-  useEffect(() => {
-    if (prefersReduced) return;
     const img = imgRef.current;
     const sig = sigRef.current;
-    if (!img) return;
+    if (!img || !sig) return;
 
-    let ticking = false;
-    const onScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const y = window.scrollY;
-          // Image : glisse vers le bas (reste "derrière")
-          img.style.transform = `translateY(${y * 0.32}px)`;
-          // Signature : monte légèrement et s'efface
-          if (sig) {
-            const progress = Math.min(1, y / (window.innerHeight * 0.6));
-            sig.style.transform = `translateY(${-progress * 48}px)`;
-            sig.style.opacity = String(Math.max(0, 1 - progress * 1.4));
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
+    let raf = 0;
+
+    const tick = () => {
+      const y   = window.scrollY;
+      const vh  = window.innerHeight;
+      const heroH = vh * 1.2; // 120svh
+
+      // Image : glisse vers le bas (parallax fond)
+      img.style.transform = `translateY(${y * 0.28}px)`;
+
+      // Signature : monte de bas en haut sur la durée du hero
+      // sigY en vh : 38vh → 0 (centré) → -42vh
+      const sigY = 38 - (y / heroH) * 80;
+      sig.style.transform = `translateY(${sigY}vh)`;
+
+      raf = 0;
     };
 
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
+    tick();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [prefersReduced]);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   return (
     <section
       className="relative -mt-14 overflow-hidden"
-      style={{ minHeight }}
+      style={{ height: "120svh" }}
       aria-label="Hero"
     >
-      {/* ── Image parallax — desktop ── */}
+      {/* ── Image desktop (surdimensionnée pour le parallax) ── */}
       <div
         ref={imgRef}
-        className="absolute inset-0 hidden will-change-transform md:block"
-        style={{ top: "-20%", height: "140%" }}
+        className="absolute inset-x-0 hidden will-change-transform md:block"
+        style={{ top: "-16%", height: "132%" }}
       >
         <Image
           src={src}
           alt={alt}
-          width={width}
-          height={height}
+          fill
           priority
           sizes="100vw"
-          className="h-full w-full object-cover"
+          className="object-cover"
         />
       </div>
 
-      {/* ── Image mobile (portrait) — sans parallax pour éviter les artefacts ── */}
+      {/* ── Image mobile portrait (sans parallax) ── */}
       <div className="absolute inset-0 md:hidden">
         <Image
           src={mobileSrc ?? src}
           alt={alt}
-          width={mobileWidth ?? width}
-          height={mobileHeight ?? height}
+          fill
           priority
           sizes="100vw"
-          className="h-full w-full object-cover object-top"
+          className="object-cover object-top"
         />
       </div>
 
-      {/* Gradient bas → noir, sobre */}
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-transparent" />
+      {/* Gradient subtil en bas */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/20 via-transparent to-transparent" />
 
-      {/* ── Signature — centrée, révélée à l'entrée, efface au scroll ── */}
+      {/* ── Signature ── */}
       <div
         ref={sigRef}
-        className="pointer-events-none absolute inset-0 flex items-center justify-center px-8 transition-opacity duration-700 ease-out"
-        style={{
-          opacity: entered ? 1 : 0,
-          transform: entered ? "translateY(0)" : "translateY(16px)",
-          transition: "opacity 1s ease, transform 1s ease",
-          willChange: "opacity, transform",
-        }}
+        className="pointer-events-none absolute inset-x-0 flex items-center justify-center px-8 will-change-transform"
+        style={{ top: "50%", transform: "translateY(38vh)" }}
       >
+        {/* Mobile */}
+        <Image
+          src={mobileSigSrc ?? "/brand/signature.webp"}
+          alt="JASPÄR"
+          width={2560}
+          height={1369}
+          priority
+          sizes="88vw"
+          className="block w-[82vw] object-contain md:hidden"
+          style={{ mixBlendMode: "difference", filter: "brightness(1.2)" }}
+        />
+        {/* Desktop */}
         <Image
           src="/brand/signature.webp"
           alt="JASPÄR"
           width={2560}
           height={1369}
-          sizes="(min-width: 768px) 60vw, 88vw"
-          className="w-[min(72vw,860px)] object-contain opacity-90 md:w-[min(58vw,860px)]"
           priority
+          sizes="54vw"
+          className="hidden w-[52vw] max-w-[800px] object-contain md:block"
+          style={{ mixBlendMode: "difference", filter: "brightness(1.15)" }}
         />
       </div>
     </section>
