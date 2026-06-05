@@ -4,22 +4,23 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 
 /**
- * Hero plein-écran avec deux couches parallax.
+ * Hero plein-écran avec effet de plongée.
  *
  * LAYER 1 — Image de fond
- *   translateY = +scrollY × 0.28 → reste "derrière" pendant le scroll
+ *   L'image monte légèrement plus vite que le scroll naturel
+ *   (translateY négatif) → elle "remonte" sous la signature.
  *
  * LAYER 2 — Signature
- *   Position initiale : bas du hero (juste visible, 50% de hauteur en dehors)
- *   Au scroll elle monte : sigY = 38vh − scroll × 100/heroH
- *   → scroll=0    : bottom du hero, à peine visible
- *   → scroll=38%  : centrée dans le cadre
- *   → scroll=80%  : sort par le haut
+ *   Reste visuellement FIXE au centre du viewport.
+ *   Dans le repère de la section, on compense le scroll :
+ *   sigTranslateY = scrollY → la section monte, la signature descend
+ *   de la même valeur → net : elle ne bouge pas à l'écran.
  *
- *   overflow:hidden sur la section → clipping propre en haut et en bas.
- *   mix-blend-mode: difference → blanc inversé sur l'image = très lisible.
+ *   Résultat : l'image monte par-dessous la signature qui paraît
+ *   plonger à l'intérieur de la photo.
  *
- * Hero height = 120svh pour laisser le temps de voir l'animation complète.
+ * mix-blend-mode : multiply → fond blanc de la signature devient
+ * transparent, les tons cuivre/bronze se fondent dans l'image.
  */
 
 interface HeroProps {
@@ -36,37 +37,35 @@ interface HeroProps {
 export function HeroParallax({
   src,
   alt,
-  width,
-  height,
   mobileSrc,
-  mobileWidth,
-  mobileHeight,
   mobileSigSrc,
 }: HeroProps) {
   const imgRef = useRef<HTMLDivElement>(null);
   const sigRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const img = imgRef.current;
     const sig = sigRef.current;
-    if (!img || !sig) return;
+    const section = sectionRef.current;
+    if (!img || !sig || !section) return;
 
     let raf = 0;
 
     const tick = () => {
-      const y   = window.scrollY;
-      const vh  = window.innerHeight;
-      const heroH = vh * 1.2; // 120svh
+      const y = window.scrollY;
+      const rect = section.getBoundingClientRect();
+      const sectionTop = y + rect.top; // position absolue du haut de la section
 
-      // Image : glisse vers le bas (parallax fond)
-      img.style.transform = `translateY(${y * 0.28}px)`;
+      // Image : monte légèrement plus vite (rise effect)
+      img.style.transform = `translateY(${-y * 0.15}px)`;
 
-      // Signature : monte de bas en haut sur la durée du hero
-      // sigY en vh : 38vh → 0 (centré) → -42vh
-      const sigY = 38 - (y / heroH) * 80;
-      sig.style.transform = `translateY(${sigY}vh)`;
+      // Signature : reste fixe dans le viewport au centre
+      // La section monte de y → on compense en descendant sig de y
+      // Point d'ancrage : top:50% de la section = center
+      sig.style.transform = `translateY(calc(-50% + ${y - sectionTop - window.innerHeight * 0.5 + section.offsetHeight * 0.5}px))`;
 
       raf = 0;
     };
@@ -75,6 +74,7 @@ export function HeroParallax({
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
+    // Init
     tick();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
@@ -85,15 +85,16 @@ export function HeroParallax({
 
   return (
     <section
+      ref={sectionRef}
       className="relative -mt-14 overflow-hidden"
-      style={{ height: "120svh" }}
+      style={{ height: "100svh" }}
       aria-label="Hero"
     >
-      {/* ── Image desktop (surdimensionnée pour le parallax) ── */}
+      {/* ── Image desktop ── */}
       <div
         ref={imgRef}
         className="absolute inset-x-0 hidden will-change-transform md:block"
-        style={{ top: "-16%", height: "132%" }}
+        style={{ top: "-10%", height: "120%" }}
       >
         <Image
           src={src}
@@ -105,7 +106,7 @@ export function HeroParallax({
         />
       </div>
 
-      {/* ── Image mobile portrait (sans parallax) ── */}
+      {/* ── Image mobile ── */}
       <div className="absolute inset-0 md:hidden">
         <Image
           src={mobileSrc ?? src}
@@ -118,35 +119,35 @@ export function HeroParallax({
       </div>
 
       {/* Gradient subtil en bas */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/20 via-transparent to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent" />
 
-      {/* ── Signature ── */}
+      {/* ── Signature — fixe au centre du viewport ── */}
       <div
         ref={sigRef}
         className="pointer-events-none absolute inset-x-0 flex items-center justify-center px-8 will-change-transform"
-        style={{ top: "50%", transform: "translateY(38vh)" }}
+        style={{ top: "50%" }}
       >
-        {/* Mobile */}
+        {/* Mobile — signature bronze (fond blanc → multiply le rend transparent) */}
         <Image
-          src={mobileSigSrc ?? "/brand/signature.webp"}
+          src={mobileSigSrc ?? "/brand/signature-rotten.png"}
           alt="JASPÄR"
-          width={2560}
-          height={1369}
+          width={1500}
+          height={900}
           priority
           sizes="88vw"
           className="block w-[82vw] object-contain md:hidden"
-          style={{ mixBlendMode: "difference", filter: "brightness(1.2)" }}
+          style={{ mixBlendMode: "multiply" }}
         />
-        {/* Desktop */}
+        {/* Desktop — signature bronze */}
         <Image
-          src="/brand/signature.webp"
+          src="/brand/signature-rotten.png"
           alt="JASPÄR"
-          width={2560}
-          height={1369}
+          width={1500}
+          height={900}
           priority
           sizes="54vw"
           className="hidden w-[52vw] max-w-[800px] object-contain md:block"
-          style={{ mixBlendMode: "difference", filter: "brightness(1.15)" }}
+          style={{ mixBlendMode: "multiply" }}
         />
       </div>
     </section>
