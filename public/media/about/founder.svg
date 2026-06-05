@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1750" viewBox="0 0 1400 1750" role="img" aria-label="The Studio">
+  <defs>
+    <linearGradient id="g39000_0" gradientTransform="rotate(85 .5 .5)">
+      <stop offset="0" stop-color="rgb(77,76,73)"/>
+      <stop offset="0.55" stop-color="rgb(128,126,122)"/>
+      <stop offset="1" stop-color="rgb(163,161,155)"/>
+    </linearGradient>
+    <filter id="ng39000_0">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="1750" fill="url(#g39000_0)"/>
+  <rect width="1400" height="1750" filter="url(#ng39000_0)"/>
+  <rect x="24" y="24" width="1352" height="1702" fill="none" stroke="rgba(17,17,16,0.5)" stroke-width="1"/>
+  <text x="700" y="869" text-anchor="middle" fill="rgba(17,17,16,0.86)" font-family="Georgia, serif" font-size="73" font-style="italic" letter-spacing="0.5">The Studio</text>
+  <text x="700" y="945" text-anchor="middle" fill="rgba(17,17,16,0.5)" font-family="Arial, sans-serif" font-size="31" letter-spacing="6" text-transform="uppercase">MANIFESTO</text>
+  <text x="700" y="1706" text-anchor="middle" fill="rgba(17,17,16,0.5)" font-family="Arial, sans-serif" font-size="28" letter-spacing="8">J A S P Ä R</text>
+</svg>

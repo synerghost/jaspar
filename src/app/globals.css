@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* ============================================================
+   JASPÄR — Design system
+   Sharp · grotesk · whitespace · éditorial
+   Typo: Inter (sans-serif system), display weight 700 condensed
+   Références: SSENSE, Our Legacy, Heliot Emil
+   ============================================================ */
+
+@theme {
+  /* Palette — warm grayscale strict */
+  --color-paper: #f2f0eb;
+  --color-paper-dim: #e8e5de;
+  --color-ink: #111110;
+  --color-ink-soft: #1c1b19;
+
+  --color-stone-50: #f7f6f2;
+  --color-stone-100: #ece9e2;
+  --color-stone-200: #dcd8cf;
+  --color-stone-300: #c2bdb1;
+  --color-stone-400: #9b958a;
+  --color-stone-500: #706a61;
+  --color-stone-600: #56504a;
+  --color-stone-700: #3b3733;
+  --color-stone-800: #252220;
+  --color-stone-900: #151311;
+
+  /* Type — strictly sans-serif / grotesk */
+  --font-sans: var(--font-inter), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+
+  /* Easing */
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Layout */
+  --spacing-gutter: clamp(1.25rem, 4vw, 5rem);
+
+  /* Hero parallax depth */
+  --parallax-speed: 0.35;
+}
+
+:root {
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+/* ── Utility classes ──────────────────────────────────────── */
+
+/* Label: tiny all-caps tracking — used for eyebrows, badges, nav */
+.label-caps {
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1.3;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Eyebrow = label-caps + muted */
+.eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-stone-500);
+}
+
+/* Display — heavy compressed grotesque headlines */
+.display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+/* Animated underline link */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.4s var(--ease-editorial);
+}
+.link-underline:hover {
+  background-size: 100% 1px;
+}
+
+/* Focus — accessible, on-brand */
+*:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+/* Scroll-reveal (progressive enhancement) */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.75s var(--ease-editorial),
+      transform 0.75s var(--ease-editorial);
+  }
+  [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Horizontal rail — hide scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Editorial marquee */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Parallax hero image — the JS sets --scroll-y custom prop on the element */
+.hero-parallax {
+  will-change: transform;
+}

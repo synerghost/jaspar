@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600" role="img" aria-label="Look 06">
+  <defs>
+    <linearGradient id="g97799_6" gradientTransform="rotate(114 .5 .5)">
+      <stop offset="0" stop-color="rgb(126,124,120)"/>
+      <stop offset="0.55" stop-color="rgb(191,188,181)"/>
+      <stop offset="1" stop-color="rgb(227,224,216)"/>
+    </linearGradient>
+    <filter id="ng97799_6">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="1600" fill="url(#g97799_6)"/>
+  <rect width="1200" height="1600" filter="url(#ng97799_6)"/>
+  <rect x="24" y="24" width="1152" height="1552" fill="none" stroke="rgba(17,17,16,0.5)" stroke-width="1"/>
+  <text x="600" y="794" text-anchor="middle" fill="rgba(17,17,16,0.86)" font-family="Georgia, serif" font-size="62" font-style="italic" letter-spacing="0.5">Look 06</text>
+  <text x="600" y="860" text-anchor="middle" fill="rgba(17,17,16,0.5)" font-family="Arial, sans-serif" font-size="26" letter-spacing="6" text-transform="uppercase">SAISON TROIS</text>
+  <text x="600" y="1556" text-anchor="middle" fill="rgba(17,17,16,0.5)" font-family="Arial, sans-serif" font-size="24" letter-spacing="8">J A S P Ä R</text>
+</svg>

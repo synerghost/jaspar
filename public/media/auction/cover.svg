@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1350" viewBox="0 0 2400 1350" role="img" aria-label="Auction">
+  <defs>
+    <linearGradient id="g60599_0" gradientTransform="rotate(95 .5 .5)">
+      <stop offset="0" stop-color="rgb(10,10,10)"/>
+      <stop offset="0.55" stop-color="rgb(46,45,44)"/>
+      <stop offset="1" stop-color="rgb(82,81,78)"/>
+    </linearGradient>
+    <filter id="ng60599_0">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+    </filter>
+  </defs>
+  <rect width="2400" height="1350" fill="url(#g60599_0)"/>
+  <rect width="2400" height="1350" filter="url(#ng60599_0)"/>
+  <rect x="24" y="24" width="2352" height="1302" fill="none" stroke="rgba(243,241,236,0.55)" stroke-width="1"/>
+  <text x="1200" y="669" text-anchor="middle" fill="rgba(243,241,236,0.92)" font-family="Georgia, serif" font-size="125" font-style="italic" letter-spacing="0.5">Auction</text>
+  <text x="1200" y="795" text-anchor="middle" fill="rgba(243,241,236,0.55)" font-family="Arial, sans-serif" font-size="53" letter-spacing="6" text-transform="uppercase">UNIQUE PIECES · LIVE SALES</text>
+  <text x="1200" y="1306" text-anchor="middle" fill="rgba(243,241,236,0.55)" font-family="Arial, sans-serif" font-size="48" letter-spacing="8">J A S P Ä R</text>
+</svg>

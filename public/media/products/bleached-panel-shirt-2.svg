@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600" role="img" aria-label="Bleached Panel">
+  <defs>
+    <linearGradient id="g10400_1" gradientTransform="rotate(70 .5 .5)">
+      <stop offset="0" stop-color="rgb(54,53,51)"/>
+      <stop offset="0.55" stop-color="rgb(98,97,93)"/>
+      <stop offset="1" stop-color="rgb(134,132,127)"/>
+    </linearGradient>
+    <filter id="ng10400_1">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="1600" fill="url(#g10400_1)"/>
+  <rect width="1200" height="1600" filter="url(#ng10400_1)"/>
+  <rect x="24" y="24" width="1152" height="1552" fill="none" stroke="rgba(243,241,236,0.55)" stroke-width="1"/>
+  <text x="600" y="794" text-anchor="middle" fill="rgba(243,241,236,0.92)" font-family="Georgia, serif" font-size="62" font-style="italic" letter-spacing="0.5">Bleached Panel</text>
+  <text x="600" y="860" text-anchor="middle" fill="rgba(243,241,236,0.55)" font-family="Arial, sans-serif" font-size="26" letter-spacing="6" text-transform="uppercase">DETAIL</text>
+  <text x="600" y="1556" text-anchor="middle" fill="rgba(243,241,236,0.55)" font-family="Arial, sans-serif" font-size="24" letter-spacing="8">J A S P Ä R</text>
+</svg>
