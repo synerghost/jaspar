@@ -22,6 +22,8 @@ const dict = {
     "cta.viewProduct": "Voir la pièce",
     "cta.continue": "Continuer",
 
+    "home.selection": "Sélection",
+
     "badge.madeToOrder": "Made to order",
     "badge.limited": "Édition limitée",
     "badge.soldOut": "Épuisé",
@@ -73,6 +75,12 @@ const dict = {
     "news.submit": "S'inscrire",
     "news.done": "Bienvenue sur la liste F&F.",
 
+    "countdown.open": "Ouverture des commandes",
+    "countdown.days": "j",
+    "countdown.hours": "h",
+    "countdown.minutes": "m",
+    "countdown.seconds": "s",
+
     "footer.tagline": "Mode contemporaine avant-gardiste · Paris · Made to order",
     "footer.rights": "Tous droits réservés.",
   },
@@ -92,6 +100,8 @@ const dict = {
     "cta.quickView": "Quick view",
     "cta.viewProduct": "View piece",
     "cta.continue": "Continue",
+
+    "home.selection": "Selection",
 
     "badge.madeToOrder": "Made to order",
     "badge.limited": "Limited edition",
@@ -143,6 +153,12 @@ const dict = {
     "news.placeholder": "Your email",
     "news.submit": "Sign up",
     "news.done": "Welcome to the F&F list.",
+
+    "countdown.open": "Orders open",
+    "countdown.days": "d",
+    "countdown.hours": "h",
+    "countdown.minutes": "m",
+    "countdown.seconds": "s",
 
     "footer.tagline": "Avant-garde contemporary fashion · Paris · Made to order",
     "footer.rights": "All rights reserved.",
