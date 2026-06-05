@@ -127,27 +127,27 @@ export function HeroParallax({
         className="pointer-events-none absolute inset-x-0 flex items-center justify-center px-8 will-change-transform"
         style={{ top: "50%" }}
       >
-        {/* Mobile — signature bronze (fond blanc → multiply le rend transparent) */}
+        {/* Mobile — signature bronze (fond déjà transparent, blend normal) */}
         <Image
           src={mobileSigSrc ?? "/brand/signature-rotten.png"}
           alt="JASPÄR"
-          width={1500}
-          height={900}
+          width={1701}
+          height={936}
           priority
           sizes="88vw"
-          className="block w-[82vw] object-contain md:hidden"
-          style={{ mixBlendMode: "multiply" }}
+          className="block w-[80vw] object-contain md:hidden"
+          style={{ filter: "drop-shadow(0 2px 18px rgba(0,0,0,0.55))" }}
         />
         {/* Desktop — signature bronze */}
         <Image
           src="/brand/signature-rotten.png"
           alt="JASPÄR"
-          width={1500}
-          height={900}
+          width={1701}
+          height={936}
           priority
           sizes="54vw"
-          className="hidden w-[52vw] max-w-[800px] object-contain md:block"
-          style={{ mixBlendMode: "multiply" }}
+          className="hidden w-[50vw] max-w-[760px] object-contain md:block"
+          style={{ filter: "drop-shadow(0 2px 22px rgba(0,0,0,0.5))" }}
         />
       </div>
     </section>

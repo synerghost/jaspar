@@ -31,7 +31,7 @@ export default function AboutPage() {
         <Reveal>
           <div className="relative overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
             <Image
-              src="/media/campaign/look3.webp"
+              src="/media/campaign/hero.webp"
               alt="JASPÄR Studio"
               fill
               sizes="100vw"

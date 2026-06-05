@@ -29,10 +29,10 @@ export default function HomePage() {
         src="/media/campaign/hero.webp"
         alt="JASPÄR Saison Trois campaign"
         width={2000}
-        height={1334}
-        mobileSrc="/media/campaign/look1.webp"
-        mobileWidth={1400}
-        mobileHeight={2100}
+        height={1333}
+        mobileSrc="/media/campaign/hero-mobile.webp"
+        mobileWidth={600}
+        mobileHeight={1200}
       />
 
       {/* ── Editorial split — Saison Trois ── */}
@@ -41,7 +41,7 @@ export default function HomePage() {
           <Reveal>
             <div className="relative overflow-hidden" style={{ aspectRatio: "2 / 3" }}>
               <Image
-                src="/media/campaign/look1.webp"
+                src="/media/campaign/campaign-01.webp"
                 alt="JASPÄR Campaign — Saison Trois"
                 fill
                 sizes="(min-width:768px) 50vw, 100vw"
@@ -88,7 +88,7 @@ export default function HomePage() {
           <Reveal className="order-1 md:order-2">
             <div className="relative overflow-hidden" style={{ aspectRatio: "2 / 3" }}>
               <Image
-                src="/media/campaign/look2.webp"
+                src="/media/campaign/campaign-02.webp"
                 alt="JASPÄR Campaign — Capsule Edito"
                 fill
                 sizes="(min-width:768px) 50vw, 100vw"
