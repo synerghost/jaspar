@@ -4,21 +4,19 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 
 /**
- * Hero — stage épinglé (sticky, hauteurs CSS dvh) + plongée parallax du logo.
+ * Hero — stage épinglé (sticky) + plongée parallax du logo + traînée de scratch.
  *
- * Hauteurs en `dvh` (PAS de recalcul JS depuis innerHeight) : sur iOS la barre
- * d'adresse fait varier innerHeight pendant le scroll ; recalculer les hauteurs
- * à chaque resize rendait le scroll saccadé. En `dvh` le layout est stable et
- * le scroll reste fluide ; la progression est lue via getBoundingClientRect.
- *
- * Au scroll épinglé :
- *   · l'image monte + zoome (parallaxe de fond) ;
- *   · le logo DESCEND du centre jusqu'en bas et s'enfonce (scale↓ + fade)
- *     → plongée dans l'image ;
- *   · des rayures verticales se gravent du haut jusqu'en bas, suivant la
- *     descente (traînée de scratch réaliste).
- *
- * `--scratch` (0→1) est posé sur le stage à chaque frame.
+ * AUDIT iOS / production :
+ *  · Hauteurs en `dvh` (CSS), AUCUNE manipulation JS des hauteurs. Sur iOS la
+ *    barre d'adresse change innerHeight pendant le scroll ; recalculer les
+ *    hauteurs en JS provoquait des sauts. `dvh` est géré nativement et reste
+ *    fluide (validé sur device).
+ *  · La progression `p` est lue via getBoundingClientRect (robuste à toutes les
+ *    unités de viewport).
+ *  · Effets en transform/opacity uniquement (composités GPU) → pas de reflow.
+ *  · Le grain « scratch » (filtre SVG coûteux) est rasterisé UNE fois sur des
+ *    tracés statiques ; la révélation au scroll passe par un `clip-path` (cheap)
+ *    → pas de recalcul de filtre par frame (sinon jank mobile).
  */
 
 interface HeroProps {
@@ -39,80 +37,68 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
   const logoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const section = sectionRef.current;
     const stage = stageRef.current;
     const img = imgRef.current;
     const logo = logoRef.current;
     if (!section || !stage || !img || !logo) return;
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    // Hauteurs depuis innerHeight (= viewport réel). Sur iOS `dvh` peut ne PAS
-    // correspondre à innerHeight → gap sous le hero + logo décentré.
-    //  · stage = innerHeight à chaque resize → remplit toujours l'écran (0 gap)
-    //  · section = innerHeight × 1.65 SEULEMENT au changement de largeur
-    //    (orientation) → la hauteur scrollable ne bouge pas quand la barre
-    //    d'adresse iOS s'affiche/se masque → scroll fluide, sans saut.
-    let baseW = window.innerWidth;
-    const setHeights = (withSection: boolean) => {
-      const vh = window.innerHeight;
-      stage.style.height = `${vh}px`;
-      if (withSection) section.style.height = `${Math.round(vh * 1.65)}px`;
-    };
-    setHeights(true);
+    // Mesures mises en cache (relues seulement au resize) → pas de lecture de
+    // layout par frame pendant le scroll.
+    let stageH = stage.clientHeight || window.innerHeight;
+    let total = section.offsetHeight - window.innerHeight;
 
     let raf = 0;
     const tick = () => {
       raf = 0;
       const rect = section.getBoundingClientRect();
-      const total = section.offsetHeight - window.innerHeight; // distance épinglée
       const p = total > 0 ? Math.min(Math.max(-rect.top / total, 0), 1) : 0;
-      const stageH = stage.clientHeight || window.innerHeight;
 
-      // Image : monte + zoome (couvrante grâce au scale de base 1.16)
-      img.style.transform = `translate3d(0, ${(-p * 6).toFixed(2)}%, 0) scale(${(1.16 + p * 0.07).toFixed(3)})`;
+      // Image : monte + zoome (couvrante grâce au scale de base 1.14)
+      img.style.transform = `translate3d(0, ${(-p * 5).toFixed(2)}%, 0) scale(${(1.14 + p * 0.06).toFixed(3)})`;
 
-      // Logo : descend jusqu'en bas, puis plonge (scale↓ + fade)
+      // Logo : descend jusqu'en bas puis plonge (scale↓ + fade)
       const ty = p * stageH * 0.5;
-      const scale = 1 - p * 0.22;
-      const op = p < 0.85 ? 1 : Math.max(0.18, 1 - ((p - 0.85) / 0.15) * 0.82);
+      const scale = 1 - p * 0.2;
+      const op = p < 0.86 ? 1 : Math.max(0.15, 1 - ((p - 0.86) / 0.14) * 0.85);
       logo.style.transform = `translate3d(0, ${ty.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
       logo.style.opacity = op.toFixed(3);
 
+      // Reveal des rayures (consommé par le clip-path, cheap)
       stage.style.setProperty("--scratch", p.toFixed(3));
     };
 
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(tick);
     };
-    const onResize = () => {
-      const widthChanged = window.innerWidth !== baseW;
-      baseW = window.innerWidth;
-      setHeights(widthChanged); // stage toujours ; section seulement si orientation
+    const remeasure = () => {
+      stageH = stage.clientHeight || window.innerHeight;
+      total = section.offsetHeight - window.innerHeight;
       onScroll();
     };
 
-    window.addEventListener("resize", onResize);
-    if (!reduce) {
-      tick();
-      window.addEventListener("scroll", onScroll, { passive: true });
-    }
+    tick();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", remeasure, { passive: true });
+    window.addEventListener("orientationchange", remeasure);
     return () => {
-      window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", remeasure);
+      window.removeEventListener("orientationchange", remeasure);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
 
   return (
-    <section ref={sectionRef} aria-label="Hero" className="relative -mt-14" style={{ height: "165dvh" }}>
-      {/* Stage épinglé */}
+    <section ref={sectionRef} aria-label="Hero" className="relative -mt-14" style={{ height: "160dvh" }}>
+      {/* Stage épinglé — dvh natif, fluide */}
       <div ref={stageRef} className="sticky top-0 h-[100dvh] overflow-hidden">
         {/* Image (monte + zoome) */}
         <div
           ref={imgRef}
           className="absolute inset-0 will-change-transform"
-          style={{ transform: "scale(1.16)", transformOrigin: "center 35%" }}
+          style={{ transform: "scale(1.14)", transformOrigin: "center 35%" }}
         >
           <Image src={src} alt={alt} fill priority sizes="100vw" className="hidden object-cover md:block" />
           <Image
@@ -128,7 +114,7 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
         {/* Dégradé bas */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/35 via-transparent to-transparent" />
 
-        {/* Rayures gravées sur le fond, derrière le logo */}
+        {/* Rayures gravées, derrière le logo */}
         <ScratchTrail />
 
         {/* Logo — descend et plonge */}
@@ -164,71 +150,57 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
 /* ============================================================
    ScratchTrail — rayures verticales gravées dans la matière.
 
-   Réalisme (repris de la V1) :
-   · filtre `sig-rough` (feTurbulence + feDisplacementMap) → bords
-     effilochés, jamais des lignes nettes de machine ;
-   · double trait par rayure : sillon SOMBRE (creux) + arête CLAIRE
-     (métal mis à nu) → profondeur 3D ;
-   · léger jitter Bézier dans le tracé → rayures non parfaitement
-     droites mais globalement verticales ;
-   · teinte brune par endroits via un dégradé vertical ;
-   · clusters de 2-3 rayures rapprochées (aspect naturel) ;
-   · tracé révélé du haut vers le bas via stroke-dashoffset + --scratch.
+   PERF : le filtre rugueux (turbulence + displacement) est appliqué à des
+   tracés STATIQUES (full-length) → rasterisé une seule fois. La révélation au
+   scroll se fait par `clip-path: inset(...)` piloté par `--scratch`, qui se
+   composite sur GPU sans relancer le filtre → fluide sur iPhone.
 
-   viewBox 0 0 100 100, preserveAspectRatio="none" (coords = % du stage),
-   vector-effect non-scaling-stroke (épaisseur px constante).
+   Réalisme : double trait par rayure (sillon sombre + arête claire), léger
+   jitter Bézier, teinte brune par endroits (dégradé), clusters de 2-3.
    ============================================================ */
 
-const Y0 = 26; // départ (haut, près du logo)
-const Y1 = 100; // jusqu'en bas
+const Y0 = 26;
+const Y1 = 100;
 
 type Line = { d: string; w: number; color: string; o: number; dark?: number };
 
-// Tracé vertical avec un léger jitter (waver) maîtrisé autour de x.
 function v(x: number, a: number, b: number, c: number) {
   return `M ${x} ${Y0} C ${(x + a).toFixed(2)} 45, ${(x + b).toFixed(2)} 72, ${(x + c).toFixed(2)} ${Y1}`;
 }
 
-const CLUSTERS: { lines: Line[] }[] = [
-  {
-    lines: [
-      { d: v(38.4, 0.5, -0.5, 0.3), w: 1.1, color: "#d7cab1", o: 0.5 },
-      { d: v(40.0, -0.4, 0.6, -0.2), w: 1.8, color: "url(#scratch-grad)", o: 0.78, dark: 0.42 },
-      { d: v(42.0, 0.6, -0.3, 0.5), w: 1.2, color: "#5e4633", o: 0.6 },
-    ],
-  },
-  {
-    lines: [
-      { d: v(48.0, -0.5, 0.4, -0.4), w: 1.3, color: "#6e5238", o: 0.58 },
-      { d: v(50.0, 0.4, -0.6, 0.3), w: 2.2, color: "url(#scratch-grad)", o: 0.9, dark: 0.46 },
-      { d: v(52.4, -0.3, 0.5, -0.2), w: 1.2, color: "#efe9dc", o: 0.62 },
-    ],
-  },
-  {
-    lines: [
-      { d: v(58.6, 0.5, -0.4, 0.4), w: 1.2, color: "#efe9dc", o: 0.55 },
-      { d: v(60.6, -0.5, 0.5, -0.3), w: 1.7, color: "url(#scratch-grad)", o: 0.74, dark: 0.4 },
-      { d: v(62.4, 0.4, -0.5, 0.5), w: 1.1, color: "#5e4633", o: 0.5 },
-    ],
-  },
+const CLUSTERS: Line[] = [
+  { d: v(38.4, 0.5, -0.5, 0.3), w: 1.1, color: "#d7cab1", o: 0.5 },
+  { d: v(40.0, -0.4, 0.6, -0.2), w: 1.8, color: "url(#scratch-grad)", o: 0.8, dark: 0.42 },
+  { d: v(42.0, 0.6, -0.3, 0.5), w: 1.2, color: "#5e4633", o: 0.6 },
+
+  { d: v(48.0, -0.5, 0.4, -0.4), w: 1.3, color: "#6e5238", o: 0.58 },
+  { d: v(50.0, 0.4, -0.6, 0.3), w: 2.2, color: "url(#scratch-grad)", o: 0.92, dark: 0.46 },
+  { d: v(52.4, -0.3, 0.5, -0.2), w: 1.2, color: "#efe9dc", o: 0.62 },
+
+  { d: v(58.6, 0.5, -0.4, 0.4), w: 1.2, color: "#efe9dc", o: 0.55 },
+  { d: v(60.6, -0.5, 0.5, -0.3), w: 1.7, color: "url(#scratch-grad)", o: 0.76, dark: 0.4 },
+  { d: v(62.4, 0.4, -0.5, 0.5), w: 1.1, color: "#5e4633", o: 0.5 },
 ];
 
 function ScratchTrail() {
-  const reveal = { strokeDashoffset: "calc(1 - var(--scratch, 0))" };
   return (
     <svg
       className="pointer-events-none absolute inset-0 h-full w-full"
-      style={{ overflow: "visible" }}
+      style={{
+        overflow: "visible",
+        // Révélation haut→bas, composité GPU (ne relance pas le filtre)
+        clipPath: "inset(0 0 calc((1 - var(--scratch, 0)) * 100%) 0)",
+        WebkitClipPath: "inset(0 0 calc((1 - var(--scratch, 0)) * 100%) 0)",
+      }}
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
       aria-hidden="true"
     >
       <defs>
-        <filter id="sig-rough" x="-20%" y="-10%" width="140%" height="120%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.9 0.12" numOctaves={2} seed={11} result="n" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale={1.6} xChannelSelector="R" yChannelSelector="G" />
+        <filter id="sig-rough" x="-25%" y="-15%" width="150%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.08 0.55" numOctaves={2} seed={11} result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale={1.3} xChannelSelector="R" yChannelSelector="G" />
         </filter>
-        {/* clair → brun → clair → brun : teinte brune par endroits */}
         <linearGradient id="scratch-grad" x1="0" y1={Y0} x2="0" y2={Y1} gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#e9e2d4" />
           <stop offset="24%" stopColor="#6e5238" />
@@ -238,34 +210,20 @@ function ScratchTrail() {
         </linearGradient>
       </defs>
 
+      {/* Tracés STATIQUES (full-length) → filtre rasterisé une fois */}
       <g fill="none" strokeLinecap="round" filter="url(#sig-rough)">
-        {CLUSTERS.map((c, ci) =>
-          c.lines.map((l, li) => (
-            <g key={`${ci}-${li}`} style={{ opacity: `calc(var(--scratch, 0) * ${l.o})` }}>
-              {/* sillon creusé (sombre) */}
-              <path
-                d={l.d}
-                stroke="#1a1410"
-                strokeOpacity={l.dark ?? 0.3}
-                strokeWidth={l.w + 1.4}
-                vectorEffect="non-scaling-stroke"
-                pathLength={1}
-                strokeDasharray={1}
-                style={reveal}
-              />
-              {/* arête éclaircie (métal / teinte) */}
-              <path
-                d={l.d}
-                stroke={l.color}
-                strokeWidth={l.w}
-                vectorEffect="non-scaling-stroke"
-                pathLength={1}
-                strokeDasharray={1}
-                style={reveal}
-              />
-            </g>
-          )),
-        )}
+        {CLUSTERS.map((l, i) => (
+          <g key={i} style={{ opacity: l.o }}>
+            <path
+              d={l.d}
+              stroke="#1a1410"
+              strokeOpacity={l.dark ?? 0.3}
+              strokeWidth={l.w + 1.4}
+              vectorEffect="non-scaling-stroke"
+            />
+            <path d={l.d} stroke={l.color} strokeWidth={l.w} vectorEffect="non-scaling-stroke" />
+          </g>
+        ))}
       </g>
     </svg>
   );
