@@ -30,7 +30,7 @@ interface HeroProps {
   mobileSigSrc?: string;
 }
 
-const SLIDE = 0.34; // part de la hauteur de stage parcourue par l'image
+const DESCENT = 0.22; // part de la hauteur de stage parcourue par la signature (se pose dans le cadre)
 
 export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -53,26 +53,25 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
     // Mesures en cache (relues au resize).
     let stageH = stage.clientHeight || window.innerHeight;
     let total = section.offsetHeight - window.innerHeight;
-    // Point de gravure enfoncé dans le haut du glyphe (~22%) → AUCUN gap : les
-    // rayures émergent de derrière le logo (placé au-dessus).
-    let carveTop = (stageH - logo.offsetHeight) / 2 + logo.offsetHeight * 0.22;
+    let startTop = (stageH - logo.offsetHeight) / 2; // haut d'origine de la signature (centrée)
 
     let raf = 0;
     const tick = () => {
       raf = 0;
       const rect = section.getBoundingClientRect();
       const p = total > 0 ? Math.min(Math.max(-rect.top / total, 0), 1) : 0;
-      const slide = p * stageH * SLIDE;
+      const desc = p * stageH * DESCENT; // la signature DESCEND et se pose dans le cadre
 
-      // L'image glisse vers le haut (le métal défile)
-      img.style.transform = `translate3d(0, ${(-slide).toFixed(1)}px, 0)`;
+      // Image quasi fixe (léger zoom) → couvre toujours, robuste
+      img.style.transform = `scale(${(1.05 + p * 0.05).toFixed(3)})`;
 
-      // Le sillon est ancré à l'image (il monte avec elle)
-      layer.style.transform = `translate3d(0, ${(-slide).toFixed(1)}px, 0)`;
-      // Bord bas du sillon = point de gravure (dans le glyphe) ; il s'allonge
-      // vers le haut au fil du défilement.
-      inner.style.top = `${carveTop.toFixed(1)}px`;
-      inner.style.height = `${slide.toFixed(1)}px`;
+      // Signature : descend, SANS fade ; se pose à l'intérieur du cadre
+      logo.style.transform = `translate3d(0, ${desc.toFixed(1)}px, 0)`;
+
+      // Sillon : du haut d'origine de la signature jusqu'à son haut courant
+      // (bord bas = haut du logo qui descend → en contact, sans gap)
+      inner.style.top = `${startTop.toFixed(1)}px`;
+      inner.style.height = `${desc.toFixed(1)}px`;
     };
 
     const onScroll = () => {
@@ -81,7 +80,7 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
     const remeasure = () => {
       stageH = stage.clientHeight || window.innerHeight;
       total = section.offsetHeight - window.innerHeight;
-      carveTop = (stageH - logo.offsetHeight) / 2 + logo.offsetHeight * 0.22;
+      startTop = (stageH - logo.offsetHeight) / 2;
       onScroll();
     };
 
@@ -100,8 +99,8 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
   return (
     <section ref={sectionRef} aria-label="Hero" className="relative -mt-14" style={{ height: "150dvh" }}>
       <div ref={stageRef} className="sticky top-0 h-[100dvh] overflow-hidden">
-        {/* Image — glisse vers le haut (surdimensionnée pour ne jamais découvrir le bas) */}
-        <div ref={imgRef} className="absolute inset-x-0 top-0 will-change-transform" style={{ height: "138%" }}>
+        {/* Image — fixe (léger zoom), couvre toujours le cadre */}
+        <div ref={imgRef} className="absolute inset-0 will-change-transform" style={{ transformOrigin: "center" }}>
           <Image src={src} alt={alt} fill priority sizes="100vw" className="hidden object-cover md:block" />
           <Image
             src={mobileSrc ?? src}
@@ -116,8 +115,8 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
         {/* Dégradé bas */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent" />
 
-        {/* Sillon gravé — ancré à l'image (même translation), derrière la signature */}
-        <div ref={trailLayerRef} className="pointer-events-none absolute inset-0 will-change-transform">
+        {/* Sillon gravé — sur l'image (fixe), derrière la signature */}
+        <div ref={trailLayerRef} className="pointer-events-none absolute inset-0">
           <div
             ref={trailInnerRef}
             className="absolute inset-x-0 mx-auto w-[82vw] max-w-[760px] overflow-hidden md:w-[50vw]"
@@ -127,9 +126,9 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
           </div>
         </div>
 
-        {/* Signature — FIXE, centrée, SANS ombre (collée au fond) */}
+        {/* Signature — descend et se pose dans le cadre, SANS ombre (collée au fond) */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
-          <div ref={logoRef} className="w-[82vw] max-w-[760px] md:w-[50vw]">
+          <div ref={logoRef} className="w-[82vw] max-w-[760px] will-change-transform md:w-[50vw]">
             <Image
               src="/brand/signature-rotten.png"
               alt="JASPÄR"
