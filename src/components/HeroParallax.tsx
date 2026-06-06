@@ -53,7 +53,9 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
     // Mesures en cache (relues au resize).
     let stageH = stage.clientHeight || window.innerHeight;
     let total = section.offsetHeight - window.innerHeight;
-    let logoTop = (stageH - logo.offsetHeight) / 2; // haut de la signature (centrée)
+    // Point de gravure enfoncé dans le haut du glyphe (~22%) → AUCUN gap : les
+    // rayures émergent de derrière le logo (placé au-dessus).
+    let carveTop = (stageH - logo.offsetHeight) / 2 + logo.offsetHeight * 0.22;
 
     let raf = 0;
     const tick = () => {
@@ -67,9 +69,9 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
 
       // Le sillon est ancré à l'image (il monte avec elle)
       layer.style.transform = `translate3d(0, ${(-slide).toFixed(1)}px, 0)`;
-      // Bord bas du sillon = haut de la signature (point de gravure courant) ;
-      // il s'allonge vers le haut au fil du défilement.
-      inner.style.top = `${logoTop.toFixed(1)}px`;
+      // Bord bas du sillon = point de gravure (dans le glyphe) ; il s'allonge
+      // vers le haut au fil du défilement.
+      inner.style.top = `${carveTop.toFixed(1)}px`;
       inner.style.height = `${slide.toFixed(1)}px`;
     };
 
@@ -79,7 +81,7 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
     const remeasure = () => {
       stageH = stage.clientHeight || window.innerHeight;
       total = section.offsetHeight - window.innerHeight;
-      logoTop = (stageH - logo.offsetHeight) / 2;
+      carveTop = (stageH - logo.offsetHeight) / 2 + logo.offsetHeight * 0.22;
       onScroll();
     };
 
@@ -176,42 +178,74 @@ function rng(seed: number) {
   };
 }
 
-// Tracé vertical irrégulier : pas de longueur aléatoire + dérive latérale.
-function jagged(x: number, sy: number, jitter: number, rand: () => number) {
-  let d = `M ${x.toFixed(2)} ${sy}`;
+// Tracé vertical irrégulier (liste de points) : segments de longueur variable
+// + dérive latérale (pas de retour systématique au centre).
+function jaggedPoints(x: number, sy: number, jitter: number, rand: () => number) {
+  const pts: [number, number][] = [[x, sy]];
   let y = sy;
   let cx = x;
   while (y < SVG_H) {
-    y += 14 + rand() * 26; // segments de longueur variable
+    y += 13 + rand() * 28;
     if (y > SVG_H) y = SVG_H;
-    cx += (rand() * 2 - 1) * jitter; // dérive latérale (pas un retour systématique)
-    cx = Math.max(x - jitter * 2.2, Math.min(x + jitter * 2.2, cx));
-    d += ` L ${cx.toFixed(2)} ${y.toFixed(1)}`;
+    cx += (rand() * 2 - 1) * jitter;
+    cx = Math.max(x - jitter * 2.4, Math.min(x + jitter * 2.4, cx));
+    pts.push([cx, y]);
   }
-  return d;
+  return pts;
+}
+
+function toPath(pts: [number, number][]) {
+  return pts.map((p, i) => `${i ? "L" : "M"} ${p[0].toFixed(2)} ${p[1].toFixed(1)}`).join(" ");
+}
+
+// Découpe le tracé en segments d'ÉPAISSEUR VARIABLE le long de la ligne.
+function varySegments(pts: [number, number][], baseW: number, rand: () => number) {
+  const segs: { d: string; w: number }[] = [];
+  let i = 0;
+  while (i < pts.length - 1) {
+    const n = 2 + Math.floor(rand() * 3); // 2-4 points
+    const chunk = pts.slice(i, Math.min(pts.length, i + n + 1));
+    if (chunk.length < 2) break;
+    segs.push({ d: toPath(chunk), w: +(baseW * (0.4 + rand() * 1.35)).toFixed(2) });
+    i += n; // partage le point de jonction → pas de trou
+  }
+  return segs;
 }
 
 type SL = { x: number; sy: number; w: number; color: string; o: number; jit: number };
-// tons métal/brun (jamais blanc) ; intégrés via mix-blend-mode overlay
+// Espacement INÉGAL des 3 groupes + isolées réparties irrégulièrement.
+// Tons métal/brun (jamais blanc), intégrés via mix-blend-mode overlay.
 const LINES: SL[] = [
-  // groupe gauche (~x21)
-  { x: 18, sy: 22, w: 1.2, color: "#7a5c3f", o: 0.85, jit: 1.0 },
-  { x: 21, sy: 0, w: 1.7, color: "#b8a684", o: 0.95, jit: 0.7 },
-  { x: 24, sy: 40, w: 1.0, color: "#8a7152", o: 0.7, jit: 1.2 },
-  // groupe centre (~x50)
-  { x: 47, sy: 28, w: 1.2, color: "#8a7152", o: 0.78, jit: 1.1 },
-  { x: 50, sy: 0, w: 1.9, color: "#c2b08c", o: 1.0, jit: 0.6 },
-  { x: 53, sy: 22, w: 1.3, color: "#6b4f37", o: 0.82, jit: 0.9 },
-  // groupe droite (~x78)
-  { x: 75, sy: 46, w: 1.0, color: "#9c8662", o: 0.7, jit: 1.2 },
-  { x: 78, sy: 8, w: 1.6, color: "#7a5c3f", o: 0.9, jit: 0.8 },
-  { x: 81, sy: 58, w: 0.9, color: "#8a7152", o: 0.62, jit: 1.3 },
-  // rayures isolées étalées
-  { x: 9, sy: 150, w: 0.8, color: "#8a7152", o: 0.55, jit: 1.4 },
-  { x: 35, sy: 188, w: 0.8, color: "#9c8662", o: 0.5, jit: 1.5 },
-  { x: 64, sy: 128, w: 0.9, color: "#6b4f37", o: 0.6, jit: 1.3 },
-  { x: 92, sy: 168, w: 0.8, color: "#8a7152", o: 0.52, jit: 1.4 },
+  // ── groupe gauche (~x16, serré) ──
+  { x: 13, sy: 30, w: 1.0, color: "#8a7152", o: 0.72, jit: 1.2 },
+  { x: 16, sy: 0, w: 1.8, color: "#b8a684", o: 0.95, jit: 0.7 },
+  { x: 19, sy: 48, w: 1.3, color: "#7a5c3f", o: 0.82, jit: 1.0 },
+  // ── groupe centre (~x45, décalé) ──
+  { x: 42, sy: 34, w: 1.1, color: "#8a7152", o: 0.76, jit: 1.2 },
+  { x: 45, sy: 0, w: 2.0, color: "#c2b08c", o: 1.0, jit: 0.6 },
+  { x: 48, sy: 22, w: 1.4, color: "#6b4f37", o: 0.86, jit: 0.9 },
+  // ── groupe droite (~x82, plus large) — ÉPAISSI ──
+  { x: 78, sy: 40, w: 1.7, color: "#9c8662", o: 0.88, jit: 1.0 },
+  { x: 82, sy: 6, w: 2.3, color: "#b8a684", o: 1.0, jit: 0.7 }, // épais
+  { x: 86, sy: 52, w: 1.6, color: "#7a5c3f", o: 0.85, jit: 1.1 }, // épaissi
+  // ── rayures isolées, réparties irrégulièrement ──
+  { x: 6, sy: 150, w: 0.8, color: "#8a7152", o: 0.55, jit: 1.5 },
+  { x: 31, sy: 205, w: 0.9, color: "#9c8662", o: 0.5, jit: 1.5 },
+  { x: 62, sy: 120, w: 1.0, color: "#6b4f37", o: 0.62, jit: 1.3 },
+  { x: 93, sy: 172, w: 0.85, color: "#8a7152", o: 0.55, jit: 1.4 },
 ];
+
+// Pré-calcul déterministe (même sortie SSR/client → pas de hydration mismatch).
+const SCRATCHES = LINES.map((l, i) => {
+  const pts = jaggedPoints(l.x, l.sy, l.jit, rng(i * 131 + 7));
+  return {
+    full: toPath(pts),
+    segs: varySegments(pts, l.w, rng(i * 977 + 3)),
+    color: l.color,
+    o: l.o,
+    gw: l.w * 1.5 + 1.0, // largeur du sillon sombre
+  };
+});
 
 function ScratchLines() {
   return (
@@ -223,17 +257,16 @@ function ScratchLines() {
       aria-hidden="true"
     >
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        {LINES.map((l, i) => {
-          const d = jagged(l.x, l.sy, l.jit, rng(i * 131 + 7));
-          return (
-            <g key={i} style={{ opacity: l.o }}>
-              {/* sillon creusé (sombre) */}
-              <path d={d} stroke="#0f0a06" strokeOpacity={0.55} strokeWidth={l.w + 1.2} vectorEffect="non-scaling-stroke" />
-              {/* arête (ton métal/brun, pas de blanc) */}
-              <path d={d} stroke={l.color} strokeWidth={l.w} vectorEffect="non-scaling-stroke" />
-            </g>
-          );
-        })}
+        {SCRATCHES.map((s, i) => (
+          <g key={i} style={{ opacity: s.o }}>
+            {/* sillon creusé (sombre), largeur constante */}
+            <path d={s.full} stroke="#0f0a06" strokeOpacity={0.5} strokeWidth={s.gw} vectorEffect="non-scaling-stroke" />
+            {/* arête : segments d'épaisseur variable */}
+            {s.segs.map((seg, j) => (
+              <path key={j} d={seg.d} stroke={s.color} strokeWidth={seg.w} vectorEffect="non-scaling-stroke" />
+            ))}
+          </g>
+        ))}
       </g>
     </svg>
   );
