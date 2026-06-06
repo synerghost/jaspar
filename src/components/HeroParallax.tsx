@@ -27,8 +27,6 @@ interface HeroProps {
   mobileSigSrc?: string;
 }
 
-const DESCENT = 0.5; // part de la hauteur de stage parcourue par le logo
-
 export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -60,13 +58,15 @@ export function HeroParallax({ src, alt, mobileSrc, mobileSigSrc }: HeroProps) {
       // Image : monte + zoome (couvrante grâce au scale de base 1.14)
       img.style.transform = `translate3d(0, ${(-p * 5).toFixed(2)}%, 0) scale(${(1.14 + p * 0.06).toFixed(3)})`;
 
-      // Logo : descend puis se dissout dans l'image (pas coupé par le bord)
-      const ty = p * stageH * DESCENT;
-      const scale = 1 - p * 0.16;
-      // fondu dès ~45% → totalement fondu vers ~92% (plonge, pas tranché)
-      const op = p < 0.45 ? 1 : Math.max(0, 1 - (p - 0.45) / 0.47);
+      // Logo : descend et RENTRE dans l'image (s'enfonce entièrement sous le
+      // bas du stage = clippé par l'image), sans fondu. À p≈0.92 il a totalement
+      // disparu sous le bord ; le travel garantit qu'il sort complètement quelle
+      // que soit sa taille (mobile vs desktop).
+      const travel = (stageH / 2 + logoH / 2 + 16) / 0.92;
+      const ty = p * travel;
+      const scale = 1 - p * 0.14;
       logo.style.transform = `translate3d(0, ${ty.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
-      logo.style.opacity = op.toFixed(3);
+      logo.style.opacity = "1";
 
       // Traînée : ancrée au fond, bord bas = haut du logo (startTop → startTop+ty)
       trail.style.top = `${startTop.toFixed(1)}px`;
