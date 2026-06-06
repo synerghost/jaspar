@@ -192,14 +192,29 @@ function jagged(x: number, sy: number, jitter: number, rand: () => number) {
 }
 
 type SL = { x: number; sy: number; w: number; color: string; o: number };
+// 3 groupements espacés (gauche / centre / droite) + rayures isolées étalées.
+// x = % de la largeur du logo (0 = bord gauche, 100 = bord droit).
 const LINES: SL[] = [
-  { x: 50, sy: 0, w: 2.0, color: "#e9e1d2", o: 0.9 }, // sillon central (stem)
-  { x: 44, sy: 34, w: 1.3, color: "#cdb79c", o: 0.62 },
-  { x: 56, sy: 26, w: 1.3, color: "#6e5238", o: 0.6 }, // brun
-  { x: 40, sy: 120, w: 1.0, color: "#e3dac9", o: 0.45 },
-  { x: 60, sy: 92, w: 1.1, color: "#5c4530", o: 0.5 }, // brun
-  { x: 47, sy: 196, w: 0.9, color: "#cdb79c", o: 0.4 },
-  { x: 53, sy: 150, w: 1.0, color: "#efe9dc", o: 0.46 },
+  // ── Groupe gauche (~x21) ──
+  { x: 18, sy: 22, w: 1.2, color: "#6e5238", o: 0.55 }, // brun
+  { x: 21, sy: 0, w: 1.8, color: "#e9e1d2", o: 0.78 },
+  { x: 24, sy: 40, w: 1.0, color: "#cdb79c", o: 0.5 },
+
+  // ── Groupe centre (~x50), aligné sur le stem ──
+  { x: 47, sy: 28, w: 1.2, color: "#cdb79c", o: 0.55 },
+  { x: 50, sy: 0, w: 2.0, color: "#efe9dc", o: 0.88 }, // sillon principal
+  { x: 53, sy: 22, w: 1.3, color: "#5c4530", o: 0.6 }, // brun
+
+  // ── Groupe droite (~x78) ──
+  { x: 75, sy: 46, w: 1.0, color: "#e3dac9", o: 0.5 },
+  { x: 78, sy: 8, w: 1.6, color: "#6e5238", o: 0.62 }, // brun
+  { x: 81, sy: 58, w: 0.9, color: "#cdb79c", o: 0.44 },
+
+  // ── Rayures isolées, étalées sur le reste de la largeur ──
+  { x: 9, sy: 150, w: 0.8, color: "#cdb79c", o: 0.34 },
+  { x: 35, sy: 188, w: 0.8, color: "#e3dac9", o: 0.32 },
+  { x: 64, sy: 128, w: 0.9, color: "#5c4530", o: 0.4 }, // brun
+  { x: 92, sy: 168, w: 0.8, color: "#cdb79c", o: 0.34 },
 ];
 
 function ScratchLines() {
