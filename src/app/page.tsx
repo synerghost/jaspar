@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
 import { Container, Section, SectionHead } from "@/components/Layout";
 import { EmailForm } from "@/components/EmailForm";
+import { HeroSignature } from "@/components/HeroSignature";
 
 /**
  * Home — hiérarchie alignée sur j4spar.com :
@@ -46,42 +47,12 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ── Signature — FIXE, centrée, SOUS le contenu (z-10) ── */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center px-6"
-      >
-        <Image
-          src="/brand/signature-rotten.png"
-          alt=""
-          width={1701}
-          height={936}
-          priority
-          sizes="(min-width:768px) 46vw, 80vw"
-          className="h-auto w-[80vw] max-w-[700px] object-contain md:w-[46vw]"
-        />
-      </div>
-
-      {/* ── 1. Hero — image métallique, SOUS la signature (z-0) ── */}
-      <section aria-label="Hero" className="relative z-0 -mt-14 h-[100dvh] overflow-hidden">
-        <Image
-          src="/media/campaign/hero.webp"
-          alt="JASPÄR Saison Trois"
-          fill
-          priority
-          sizes="100vw"
-          className="hidden object-cover md:block"
-        />
-        <Image
-          src="/media/campaign/hero-mobile.webp"
-          alt="JASPÄR Saison Trois"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center md:hidden"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent" />
-      </section>
+      {/* ── 1. Hero — image métallique + signature fixe + traînée (z-0 / z-10) ── */}
+      <HeroSignature
+        src="/media/campaign/hero.webp"
+        alt="JASPÄR Saison Trois"
+        mobileSrc="/media/campaign/hero-mobile.webp"
+      />
 
       {/* ── Contenu — AU-DESSUS de la signature (z-20), fond opaque ── */}
       <div className="relative z-20 bg-paper">
