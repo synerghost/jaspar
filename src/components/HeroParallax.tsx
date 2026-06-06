@@ -178,38 +178,43 @@ function rng(seed: number) {
   };
 }
 
-// Tracé vertical irrégulier (liste de points) : segments de longueur variable
-// + dérive latérale (pas de retour systématique au centre).
+// Tracé vertical fin et peu dévié (sharp) : beaucoup de points rapprochés.
 function jaggedPoints(x: number, sy: number, jitter: number, rand: () => number) {
   const pts: [number, number][] = [[x, sy]];
   let y = sy;
   let cx = x;
   while (y < SVG_H) {
-    y += 13 + rand() * 28;
+    y += 7 + rand() * 13; // pas fins → transitions de largeur douces
     if (y > SVG_H) y = SVG_H;
-    cx += (rand() * 2 - 1) * jitter;
-    cx = Math.max(x - jitter * 2.4, Math.min(x + jitter * 2.4, cx));
+    cx += (rand() * 2 - 1) * jitter * 0.6; // dérive faible → rayure plus droite
+    cx = Math.max(x - jitter * 1.6, Math.min(x + jitter * 1.6, cx));
     pts.push([cx, y]);
   }
   return pts;
 }
 
-function toPath(pts: [number, number][]) {
-  return pts.map((p, i) => `${i ? "L" : "M"} ${p[0].toFixed(2)} ${p[1].toFixed(1)}`).join(" ");
+// Profil d'épaisseur CONTINU (marche aléatoire douce + effilage des bouts) :
+// la largeur évolue point par point, jamais d'un coup.
+function widthProfile(n: number, baseW: number, rand: () => number) {
+  const ws: number[] = [];
+  let w = baseW * (0.7 + rand() * 0.4);
+  for (let i = 0; i < n; i++) {
+    w += (rand() * 2 - 1) * baseW * 0.1; // pas doux
+    w = Math.max(baseW * 0.45, Math.min(baseW * 1.4, w));
+    const t = n > 1 ? i / (n - 1) : 0;
+    const taper = Math.min(1, Math.min(t, 1 - t) / 0.12) * 0.7 + 0.3; // pointes effilées
+    ws.push(w * taper);
+  }
+  return ws;
 }
 
-// Découpe le tracé en segments d'ÉPAISSEUR VARIABLE le long de la ligne.
-function varySegments(pts: [number, number][], baseW: number, rand: () => number) {
-  const segs: { d: string; w: number }[] = [];
-  let i = 0;
-  while (i < pts.length - 1) {
-    const n = 2 + Math.floor(rand() * 3); // 2-4 points
-    const chunk = pts.slice(i, Math.min(pts.length, i + n + 1));
-    if (chunk.length < 2) break;
-    segs.push({ d: toPath(chunk), w: +(baseW * (0.4 + rand() * 1.35)).toFixed(2) });
-    i += n; // partage le point de jonction → pas de trou
-  }
-  return segs;
+// Ruban plein (1 forme) à largeur variable : bord gauche descendant puis bord
+// droit remontant → fill net, épaisseur continue.
+function ribbon(pts: [number, number][], ws: number[]) {
+  let d = `M ${(pts[0][0] - ws[0] / 2).toFixed(2)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) d += ` L ${(pts[i][0] - ws[i] / 2).toFixed(2)} ${pts[i][1].toFixed(1)}`;
+  for (let i = pts.length - 1; i >= 0; i--) d += ` L ${(pts[i][0] + ws[i] / 2).toFixed(2)} ${pts[i][1].toFixed(1)}`;
+  return d + " Z";
 }
 
 type SL = { x: number; sy: number; w: number; color: string; o: number; jit: number };
@@ -217,33 +222,38 @@ type SL = { x: number; sy: number; w: number; color: string; o: number; jit: num
 // Tons métal/brun (jamais blanc), intégrés via mix-blend-mode overlay.
 const LINES: SL[] = [
   // ── groupe gauche (~x16, serré) ──
-  { x: 13, sy: 30, w: 1.0, color: "#8a7152", o: 0.72, jit: 1.2 },
-  { x: 16, sy: 0, w: 1.8, color: "#b8a684", o: 0.95, jit: 0.7 },
-  { x: 19, sy: 48, w: 1.3, color: "#7a5c3f", o: 0.82, jit: 1.0 },
+  { x: 13, sy: 30, w: 1.0, color: "#94794f", o: 0.85, jit: 0.8 },
+  { x: 16, sy: 0, w: 1.8, color: "#cdb78c", o: 1.0, jit: 0.5 },
+  { x: 19, sy: 48, w: 1.3, color: "#7a5a36", o: 0.92, jit: 0.7 },
   // ── groupe centre (~x45, décalé) ──
-  { x: 42, sy: 34, w: 1.1, color: "#8a7152", o: 0.76, jit: 1.2 },
-  { x: 45, sy: 0, w: 2.0, color: "#c2b08c", o: 1.0, jit: 0.6 },
-  { x: 48, sy: 22, w: 1.4, color: "#6b4f37", o: 0.86, jit: 0.9 },
+  { x: 42, sy: 34, w: 1.1, color: "#94794f", o: 0.88, jit: 0.8 },
+  { x: 45, sy: 0, w: 2.0, color: "#d6c193", o: 1.0, jit: 0.45 },
+  { x: 48, sy: 22, w: 1.4, color: "#6b4d2f", o: 0.95, jit: 0.6 },
   // ── groupe droite (~x82, plus large) — ÉPAISSI ──
-  { x: 78, sy: 40, w: 1.7, color: "#9c8662", o: 0.88, jit: 1.0 },
-  { x: 82, sy: 6, w: 2.3, color: "#b8a684", o: 1.0, jit: 0.7 }, // épais
-  { x: 86, sy: 52, w: 1.6, color: "#7a5c3f", o: 0.85, jit: 1.1 }, // épaissi
+  { x: 78, sy: 40, w: 1.7, color: "#a88f5e", o: 0.95, jit: 0.7 },
+  { x: 82, sy: 6, w: 2.3, color: "#cdb78c", o: 1.0, jit: 0.5 }, // épais
+  { x: 86, sy: 52, w: 1.7, color: "#7a5a36", o: 0.92, jit: 0.8 }, // épaissi
   // ── rayures isolées, réparties irrégulièrement ──
-  { x: 6, sy: 150, w: 0.8, color: "#8a7152", o: 0.55, jit: 1.5 },
-  { x: 31, sy: 205, w: 0.9, color: "#9c8662", o: 0.5, jit: 1.5 },
-  { x: 62, sy: 120, w: 1.0, color: "#6b4f37", o: 0.62, jit: 1.3 },
-  { x: 93, sy: 172, w: 0.85, color: "#8a7152", o: 0.55, jit: 1.4 },
+  { x: 6, sy: 150, w: 0.8, color: "#94794f", o: 0.6, jit: 1.1 },
+  { x: 31, sy: 205, w: 0.9, color: "#a88f5e", o: 0.58, jit: 1.1 },
+  { x: 62, sy: 120, w: 1.0, color: "#6b4d2f", o: 0.7, jit: 0.9 },
+  { x: 93, sy: 172, w: 0.85, color: "#94794f", o: 0.6, jit: 1.0 },
 ];
+
+const RW = 0.42; // largeur (px visés) → unités x du viewBox (x étiré ~3×)
 
 // Pré-calcul déterministe (même sortie SSR/client → pas de hydration mismatch).
 const SCRATCHES = LINES.map((l, i) => {
   const pts = jaggedPoints(l.x, l.sy, l.jit, rng(i * 131 + 7));
+  const ws = widthProfile(pts.length, l.w * RW, rng(i * 977 + 3));
   return {
-    full: toPath(pts),
-    segs: varySegments(pts, l.w, rng(i * 977 + 3)),
+    light: ribbon(pts, ws),
+    groove: ribbon(
+      pts,
+      ws.map((w) => w + 0.4),
+    ), // sillon sombre légèrement plus large (bord net)
     color: l.color,
     o: l.o,
-    gw: l.w * 1.5 + 1.0, // largeur du sillon sombre
   };
 });
 
@@ -256,18 +266,14 @@ function ScratchLines() {
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        {SCRATCHES.map((s, i) => (
-          <g key={i} style={{ opacity: s.o }}>
-            {/* sillon creusé (sombre), largeur constante */}
-            <path d={s.full} stroke="#0f0a06" strokeOpacity={0.5} strokeWidth={s.gw} vectorEffect="non-scaling-stroke" />
-            {/* arête : segments d'épaisseur variable */}
-            {s.segs.map((seg, j) => (
-              <path key={j} d={seg.d} stroke={s.color} strokeWidth={seg.w} vectorEffect="non-scaling-stroke" />
-            ))}
-          </g>
-        ))}
-      </g>
+      {SCRATCHES.map((s, i) => (
+        <g key={i} style={{ opacity: s.o }}>
+          {/* sillon creusé (sombre) — fin liseré net autour de l'arête */}
+          <path d={s.groove} fill="#0d0905" fillOpacity={0.55} />
+          {/* arête (ton métal/brun) — épaisseur continue */}
+          <path d={s.light} fill={s.color} />
+        </g>
+      ))}
     </svg>
   );
 }
