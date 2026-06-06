@@ -135,9 +135,3 @@ body {
   will-change: transform;
 }
 
-/* ── Signature : traînée de scratch (pilotée par --scratch au scroll) ── */
-@property --scratch {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0;
-}
