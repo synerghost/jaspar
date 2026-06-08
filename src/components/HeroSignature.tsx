@@ -156,24 +156,25 @@ function jaggedDown(x: number, syVB: number, jitter: number, rand: () => number)
 }
 
 // fy = fraction du contour SUPÉRIEUR du glyphe (échantillonné depuis l'alpha).
+// w = épaisseur en UNITÉS viewBox (pas de non-scaling-stroke → reveal OK sur Safari).
 type SL = { x: number; fy: number; w: number; color: string; o: number; jit: number };
 const LINES: SL[] = [
   // groupe gauche (bras montant)
-  { x: 13, fy: 0.447, w: 1.0, color: "#94794f", o: 0.85, jit: 1.4 },
-  { x: 18, fy: 0.347, w: 1.4, color: "#cdb78c", o: 1.0, jit: 1.2 },
+  { x: 13, fy: 0.447, w: 0.34, color: "#94794f", o: 0.85, jit: 1.4 },
+  { x: 18, fy: 0.347, w: 0.5, color: "#cdb78c", o: 1.0, jit: 1.2 },
   // groupe centre (pic / T)
-  { x: 42, fy: 0.082, w: 1.2, color: "#94794f", o: 0.9, jit: 1.0 },
-  { x: 45, fy: 0.071, w: 1.9, color: "#d6c193", o: 1.0, jit: 0.8 },
-  { x: 50, fy: 0.062, w: 1.4, color: "#6b4d2f", o: 0.95, jit: 0.9 },
-  { x: 55, fy: 0.104, w: 1.2, color: "#cdb78c", o: 0.9, jit: 1.0 },
+  { x: 42, fy: 0.082, w: 0.42, color: "#94794f", o: 0.9, jit: 1.0 },
+  { x: 45, fy: 0.071, w: 0.66, color: "#d6c193", o: 1.0, jit: 0.8 },
+  { x: 50, fy: 0.062, w: 0.48, color: "#6b4d2f", o: 0.95, jit: 0.9 },
+  { x: 55, fy: 0.104, w: 0.42, color: "#cdb78c", o: 0.9, jit: 1.0 },
   // groupe droite (pics droite)
-  { x: 62, fy: 0.075, w: 1.7, color: "#a88f5e", o: 0.95, jit: 0.9 },
-  { x: 78, fy: 0.19, w: 1.5, color: "#7a5a36", o: 0.92, jit: 1.2 },
+  { x: 62, fy: 0.075, w: 0.58, color: "#a88f5e", o: 0.95, jit: 0.9 },
+  { x: 78, fy: 0.19, w: 0.52, color: "#7a5a36", o: 0.92, jit: 1.2 },
   // isolées (extrémités du glyphe)
-  { x: 6, fy: 0.378, w: 0.8, color: "#94794f", o: 0.6, jit: 1.6 },
-  { x: 31, fy: 0.159, w: 0.9, color: "#a88f5e", o: 0.62, jit: 1.4 },
-  { x: 86, fy: 0.306, w: 0.9, color: "#6b4d2f", o: 0.68, jit: 1.4 },
-  { x: 93, fy: 0.471, w: 0.8, color: "#94794f", o: 0.58, jit: 1.6 },
+  { x: 6, fy: 0.378, w: 0.28, color: "#94794f", o: 0.6, jit: 1.6 },
+  { x: 31, fy: 0.159, w: 0.3, color: "#a88f5e", o: 0.62, jit: 1.4 },
+  { x: 86, fy: 0.306, w: 0.3, color: "#6b4d2f", o: 0.68, jit: 1.4 },
+  { x: 93, fy: 0.471, w: 0.28, color: "#94794f", o: 0.58, jit: 1.6 },
 ];
 
 const SCRATCHES = LINES.map((l, i) => ({
@@ -196,27 +197,18 @@ function ScratchLines() {
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
         {SCRATCHES.map((s, i) => (
           <g key={i} style={{ opacity: s.o }}>
-            {/* sillon creusé (sombre) */}
+            {/* sillon creusé (sombre) — épaisseur en unités viewBox, pas de non-scaling */}
             <path
               d={s.d}
               stroke="#0d0905"
               strokeOpacity={0.55}
-              strokeWidth={s.w + 1.3}
-              vectorEffect="non-scaling-stroke"
+              strokeWidth={s.w + 0.28}
               pathLength={1}
-              strokeDasharray={1}
+              strokeDasharray="1 1"
               style={reveal}
             />
             {/* arête (ton métal / brun) */}
-            <path
-              d={s.d}
-              stroke={s.color}
-              strokeWidth={s.w}
-              vectorEffect="non-scaling-stroke"
-              pathLength={1}
-              strokeDasharray={1}
-              style={reveal}
-            />
+            <path d={s.d} stroke={s.color} strokeWidth={s.w} pathLength={1} strokeDasharray="1 1" style={reveal} />
           </g>
         ))}
       </g>
