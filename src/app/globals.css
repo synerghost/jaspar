@@ -135,33 +135,4 @@ body {
   will-change: transform;
 }
 
-/* ── Poussière du hero (le métal s'effrite sous la signature) ───────── */
-.dust-mote {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0;
-  will-change: transform, opacity;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .dust-mote {
-    animation: dust-fall var(--dur, 5s) linear infinite;
-    animation-delay: var(--delay, 0s);
-  }
-}
-@keyframes dust-fall {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
-  }
-  10% {
-    opacity: var(--peak, 0.85);
-  }
-  75% {
-    opacity: calc(var(--peak, 0.85) * 0.7);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--dx, 6px), var(--dy, 46px));
-  }
-}
 
