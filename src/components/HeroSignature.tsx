@@ -22,7 +22,6 @@ interface Props {
   sigSrc?: string;
 }
 
-const SIG_RATIO = 936 / 1701; // hauteur/largeur du glyphe
 const LEN = 185; // longueur des rayures en unités viewBox (x:0-100)
 
 export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-rotten.png" }: Props) {
@@ -35,26 +34,23 @@ export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-
     const trail = trailRef.current;
     if (!hero || !trail) return;
 
-    let heroDocTop = 0;
+    // Largeur de la boîte (mise en cache, relue au resize) pour la longueur des rayures.
+    let boxW = trail.offsetWidth || 1;
     let raf = 0;
-
-    const measure = () => {
-      heroDocTop = hero.getBoundingClientRect().top + window.scrollY;
-      const boxW = trail.offsetWidth;
-      const boxH = boxW * SIG_RATIO;
-      // La traînée recouvre EXACTEMENT la boîte de la signature (centrée) à
-      // scroll 0 → le contour SVG tombe pile sur le glyphe.
-      trail.style.top = `${(window.innerHeight / 2 - boxH / 2).toFixed(1)}px`;
-      trail.style.height = `${boxH.toFixed(1)}px`;
-    };
 
     const tick = () => {
       raf = 0;
-      const boxW = trail.offsetWidth || 1;
-      const lenPx = (LEN * boxW) / 100; // longueur d'une rayure à l'écran
-      const reveal = Math.max(0, Math.min(1, (window.scrollY - heroDocTop) / lenPx));
-      // Posé sur la racine → rayures (dans le hero) ET poussière (couche fixe)
-      // en héritent toutes les deux.
+      // Position LIVE du haut du hero : 0 au repos, négative au scroll. C'est la
+      // seule mesure dont on dépend → robuste (pas d'innerHeight figé, pas de
+      // décalage quand la barre d'adresse iOS apparaît/disparaît).
+      const top = hero.getBoundingClientRect().top;
+      // La traînée est centrée en CSS comme la signature (donc TOUJOURS alignée
+      // avec elle) ; elle suit le métal qui défile via translateY.
+      trail.style.transform = `translate3d(0, ${top.toFixed(1)}px, 0)`;
+      // Révélation = distance parcourue / longueur d'une rayure → le bord bas
+      // (gravure récente) reste collé au contour du glyphe.
+      const lenPx = (LEN * boxW) / 100;
+      const reveal = Math.max(0, Math.min(1, -top / lenPx));
       document.documentElement.style.setProperty("--reveal", reveal.toFixed(4));
     };
 
@@ -62,25 +58,38 @@ export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-
       if (!raf) raf = requestAnimationFrame(tick);
     };
     const onResize = () => {
-      measure();
+      boxW = trail.offsetWidth || 1;
       onScroll();
     };
 
-    measure();
     tick();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
     window.addEventListener("orientationchange", onResize);
+    window.addEventListener("load", onResize);
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
+      window.removeEventListener("load", onResize);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
 
   return (
     <>
+      {/* Traînée — FIXE & centrée (même centrage CSS que la signature → toujours
+          alignée) ; suit le métal via translateY ; SOUS la signature (z-8). */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-[8] flex items-center justify-center px-6">
+        <div
+          ref={trailRef}
+          className="relative w-[80vw] max-w-[700px] md:w-[46vw]"
+          style={{ aspectRatio: "1701 / 936", willChange: "transform" }}
+        >
+          <ScratchLines />
+        </div>
+      </div>
+
       {/* Signature — FIXE, centrée, SOUS le contenu (z-10) */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center px-6">
         <Image
@@ -94,7 +103,7 @@ export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-
         />
       </div>
 
-      {/* Hero — image métallique, SOUS la signature (z-0) */}
+      {/* Hero — image métallique (z-0) */}
       <section ref={heroRef} aria-label="Hero" className="relative z-0 -mt-14 h-[100dvh] overflow-hidden">
         <Image src={src} alt={alt} fill priority sizes="100vw" className="hidden object-cover md:block" />
         <Image
@@ -106,15 +115,6 @@ export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-
           className="object-cover object-center md:hidden"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent" />
-
-        {/* Traînée — boîte calée sur la signature ; rayures ancrées au contour du glyphe */}
-        <div
-          ref={trailRef}
-          className="pointer-events-none absolute inset-x-0 mx-auto w-[80vw] max-w-[700px] md:w-[46vw]"
-          style={{ top: 0, height: 0 }}
-        >
-          <ScratchLines />
-        </div>
       </section>
     </>
   );
