@@ -31,7 +31,9 @@ export function Reveal({
           io.disconnect();
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+      // Déclenche AVANT l'entrée à l'écran (marge basse positive) → l'élément est
+      // déjà révélé quand on arrive dessus, pas de pop en plein scroll.
+      { threshold: 0.01, rootMargin: "0px 0px 25% 0px" },
     );
     io.observe(el);
     return () => io.disconnect();

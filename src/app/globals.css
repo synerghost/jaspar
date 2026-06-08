@@ -105,10 +105,10 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   [data-reveal] {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(12px);
     transition:
-      opacity 0.75s var(--ease-editorial),
-      transform 0.75s var(--ease-editorial);
+      opacity 0.55s var(--ease-editorial),
+      transform 0.55s var(--ease-editorial);
   }
   [data-reveal].is-in {
     opacity: 1;

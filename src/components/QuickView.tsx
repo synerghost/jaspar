@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { Product } from "@/data/types";
 import { useLocale } from "@/lib/i18n";
 import { titleCase } from "@/lib/format";
@@ -18,6 +19,14 @@ export function QuickView({
   onClose: () => void;
 }) {
   const { t } = useLocale();
+  // Montage paresseux : tant que jamais ouvert, on ne rend AUCUN overlay fixe
+  // (évite 10 drawers + 10 ombres montés en permanence sur la grille).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    if (open) setMounted(true);
+  }, [open]);
+  if (!mounted) return null;
+
   return (
     <Drawer open={open} onClose={onClose} label={`${t("cta.quickView")} — ${product.name}`} width="max-w-lg">
       <header className="flex items-center justify-between border-b border-ink/10 px-6 py-4">

@@ -31,7 +31,7 @@ export function Drawer({
   }, [open, onClose]);
 
   return (
-    <div className={clsx("fixed inset-0 z-[60]", !open && "pointer-events-none")} aria-hidden={!open}>
+    <div className={clsx("fixed inset-0 z-[60] overflow-hidden", !open && "pointer-events-none")} aria-hidden={!open}>
       <div
         onClick={onClose}
         className={clsx(

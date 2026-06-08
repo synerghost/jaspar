@@ -11,7 +11,7 @@ export function Footer() {
   const fr = locale === "fr";
 
   return (
-    <footer className="relative z-20 mt-24 border-t border-ink/10 bg-paper">
+    <footer className="relative z-20 border-t border-ink/10 bg-paper">
       <div className="mx-[var(--spacing-gutter)] grid gap-12 py-16 md:grid-cols-[1.5fr_1fr_1fr_1.5fr]">
         {/* Brand */}
         <div>
