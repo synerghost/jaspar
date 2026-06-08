@@ -130,17 +130,18 @@ export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-
    Particules animées en CSS (transform/opacity) → GPU, perf mobile ok.
    ============================================================ */
 
-const DUST = Array.from({ length: 22 }, (_, i) => {
+const DUST = Array.from({ length: 38 }, (_, i) => {
   const r = rng(i * 73 + 11);
   return {
     left: +(r() * 100).toFixed(1),
-    top: +(r() * 100).toFixed(1),
-    size: +(1 + r() * 2.4).toFixed(2),
+    // concentré vers le centre vertical (la zone de gravure)
+    top: +(20 + r() * 60).toFixed(1),
+    size: +(2 + r() * 3.4).toFixed(2),
     delay: +(r() * 5).toFixed(2),
-    dur: +(3.5 + r() * 4.5).toFixed(2),
-    dx: +((r() * 2 - 1) * 18).toFixed(1),
-    dy: +(24 + r() * 50).toFixed(1),
-    peak: +(0.35 + r() * 0.45).toFixed(2),
+    dur: +(3 + r() * 4).toFixed(2),
+    dx: +((r() * 2 - 1) * 22).toFixed(1),
+    dy: +(30 + r() * 60).toFixed(1),
+    peak: +(0.6 + r() * 0.4).toFixed(2),
     brown: r() > 0.5,
   };
 });
@@ -149,7 +150,7 @@ function Dust() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-[15] flex items-center justify-center">
       <div
-        className="relative h-[58vh] w-[88vw] max-w-[760px] md:w-[52vw]"
+        className="relative h-[62vh] w-[92vw] max-w-[820px] md:w-[56vw]"
         style={{ opacity: "var(--reveal, 0)" }}
       >
         {DUST.map((d, i) => (
@@ -161,7 +162,8 @@ function Dust() {
               top: `${d.top}%`,
               width: `${d.size}px`,
               height: `${d.size}px`,
-              background: d.brown ? "rgba(150,120,80,0.9)" : "rgba(214,196,160,0.9)",
+              background: d.brown ? "rgba(166,134,88,0.95)" : "rgba(228,212,178,0.98)",
+              boxShadow: d.brown ? "0 0 2px rgba(166,134,88,0.6)" : "0 0 3px rgba(228,212,178,0.7)",
               ["--dur" as string]: `${d.dur}s`,
               ["--delay" as string]: `${d.delay}s`,
               ["--dx" as string]: `${d.dx}px`,
@@ -232,12 +234,13 @@ const LINES: SL[] = [
   { x: 31, fy: 0.159, w: 0.3, color: "#a88f5e", o: 0.62, jit: 1.4 },
   { x: 86, fy: 0.306, w: 0.3, color: "#6b4d2f", o: 0.68, jit: 1.4 },
   { x: 93, fy: 0.471, w: 0.28, color: "#94794f", o: 0.58, jit: 1.6 },
-  // égratinures courtes (scuffs) — fines, plus dispersées
-  { x: 22, fy: 0.3, w: 0.22, color: "#a88f5e", o: 0.55, jit: 2.0, lm: 0.32 },
-  { x: 38, fy: 0.1, w: 0.24, color: "#cdb78c", o: 0.6, jit: 1.8, lm: 0.38 },
-  { x: 58, fy: 0.09, w: 0.22, color: "#6b4d2f", o: 0.58, jit: 1.9, lm: 0.3 },
-  { x: 70, fy: 0.13, w: 0.24, color: "#a88f5e", o: 0.55, jit: 2.0, lm: 0.36 },
-  { x: 48, fy: 0.07, w: 0.2, color: "#94794f", o: 0.5, jit: 1.7, lm: 0.28 },
+  // égratinures (scuffs) — plus courtes que les traînées, dispersées, visibles
+  { x: 24, fy: 0.3, w: 0.42, color: "#cdb78c", o: 0.85, jit: 2.2, lm: 0.5 },
+  { x: 37, fy: 0.1, w: 0.46, color: "#d6c193", o: 0.9, jit: 1.9, lm: 0.6 },
+  { x: 58, fy: 0.09, w: 0.4, color: "#a88f5e", o: 0.85, jit: 2.0, lm: 0.52 },
+  { x: 70, fy: 0.13, w: 0.44, color: "#cdb78c", o: 0.85, jit: 2.2, lm: 0.58 },
+  { x: 34, fy: 0.12, w: 0.36, color: "#6b4d2f", o: 0.8, jit: 1.8, lm: 0.44 },
+  { x: 66, fy: 0.085, w: 0.34, color: "#6b4d2f", o: 0.8, jit: 1.9, lm: 0.46 },
 ];
 
 const SCRATCHES = LINES.map((l, i) => ({

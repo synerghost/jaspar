@@ -153,15 +153,15 @@ body {
     opacity: 0;
     transform: translate(0, 0);
   }
-  12% {
-    opacity: var(--peak, 0.6);
+  10% {
+    opacity: var(--peak, 0.85);
   }
-  85% {
-    opacity: calc(var(--peak, 0.6) * 0.25);
+  75% {
+    opacity: calc(var(--peak, 0.85) * 0.7);
   }
   100% {
     opacity: 0;
-    transform: translate(var(--dx, 6px), var(--dy, 40px));
+    transform: translate(var(--dx, 6px), var(--dy, 46px));
   }
 }
 
