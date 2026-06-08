@@ -140,18 +140,21 @@ function rng(seed: number) {
   };
 }
 
-// Rayure : part de (x, syVB) — le contour du glyphe — et DESCEND de LEN (viewBox),
-// avec une légère dérive latérale. (Descendre en viewBox = monter à l'écran.)
+// Rayure : part de (x, syVB) — le contour du glyphe — et DESCEND de LEN (viewBox).
+// Tracé organique : longueurs de segments variables + dérive latérale douce avec
+// quelques « accrocs » plus marqués (comme un outil qui ripe sur le métal).
 function jaggedDown(x: number, syVB: number, jitter: number, rand: () => number, lm = 1) {
   const pts: [number, number][] = [[x, syVB]];
   const end = syVB + LEN * lm;
   let y = syVB;
   let cx = x;
   while (y < end) {
-    y += 6 + rand() * 10;
+    y += 4 + rand() * 13; // segments inégaux
     if (y > end) y = end;
-    cx += (rand() * 2 - 1) * jitter * 0.5;
-    cx = Math.max(x - jitter, Math.min(x + jitter, cx));
+    // dérive douce, avec ~15% d'accrocs latéraux plus francs
+    const kick = (rand() * 2 - 1) * jitter * (rand() < 0.15 ? 1.5 : 0.45);
+    cx += kick;
+    cx = Math.max(x - jitter * 1.3, Math.min(x + jitter * 1.3, cx));
     pts.push([cx, y]);
   }
   return pts.map((p, i) => `${i ? "L" : "M"} ${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(" ");
@@ -187,7 +190,9 @@ const SCRATCHES = LINES.map((l, i) => ({
 }));
 
 function ScratchLines() {
+  // Révélation partagée par toutes les couches (stroke-dashoffset piloté par --reveal).
   const reveal = { strokeDashoffset: "calc(1 - var(--reveal, 0))" } as const;
+  const dash = { pathLength: 1, strokeDasharray: "1 1" } as const;
   return (
     <svg
       className="absolute left-0 top-0 h-full w-full"
@@ -196,21 +201,44 @@ function ScratchLines() {
       preserveAspectRatio="none"
       aria-hidden="true"
     >
+      <defs>
+        {/* effilage : chaque rayure s'amincit/s'estompe à ses extrémités */}
+        <linearGradient id="scr-taper" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0.5" />
+          <stop offset="14%" stopColor="#fff" stopOpacity="1" />
+          <stop offset="74%" stopColor="#fff" stopOpacity="0.92" />
+          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <mask id="scr-taper-mask" maskContentUnits="objectBoundingBox">
+          <rect x="-0.7" y="-0.04" width="2.4" height="1.08" fill="url(#scr-taper)" />
+        </mask>
+      </defs>
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
         {SCRATCHES.map((s, i) => (
-          <g key={i} style={{ opacity: s.o }}>
-            {/* sillon creusé (sombre) — épaisseur en unités viewBox, pas de non-scaling */}
+          <g key={i} style={{ opacity: s.o }} mask="url(#scr-taper-mask)">
+            {/* 1. halo — métal perturbé autour du sillon (large, très diffus) */}
             <path
               d={s.d}
-              stroke="#0d0905"
-              strokeOpacity={0.55}
-              strokeWidth={s.w + 0.28}
-              pathLength={1}
-              strokeDasharray="1 1"
+              stroke="#1a120a"
+              strokeOpacity={0.16}
+              strokeWidth={s.w * 2.6 + 0.4}
+              {...dash}
               style={reveal}
             />
-            {/* arête (ton métal / brun) */}
-            <path d={s.d} stroke={s.color} strokeWidth={s.w} pathLength={1} strokeDasharray="1 1" style={reveal} />
+            {/* 2. sillon creusé (recess sombre) */}
+            <path d={s.d} stroke="#0b0703" strokeOpacity={0.5} strokeWidth={s.w + 0.34} {...dash} style={reveal} />
+            {/* 3. arête — ton métal/brun mis à nu */}
+            <path d={s.d} stroke={s.color} strokeWidth={s.w} {...dash} style={reveal} />
+            {/* 4. reflet — métal frais qui accroche la lumière, fin & légèrement décalé (biseau) */}
+            <path
+              d={s.d}
+              stroke="#efe4cd"
+              strokeOpacity={0.7}
+              strokeWidth={Math.max(0.14, s.w * 0.42)}
+              transform="translate(-0.12 -0.2)"
+              {...dash}
+              style={reveal}
+            />
           </g>
         ))}
       </g>
