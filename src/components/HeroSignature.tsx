@@ -53,7 +53,9 @@ export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-
       const boxW = trail.offsetWidth || 1;
       const lenPx = (LEN * boxW) / 100; // longueur d'une rayure à l'écran
       const reveal = Math.max(0, Math.min(1, (window.scrollY - heroDocTop) / lenPx));
-      trail.style.setProperty("--reveal", reveal.toFixed(4));
+      // Posé sur la racine → rayures (dans le hero) ET poussière (couche fixe)
+      // en héritent toutes les deux.
+      document.documentElement.style.setProperty("--reveal", reveal.toFixed(4));
     };
 
     const onScroll = () => {
@@ -79,6 +81,9 @@ export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-
 
   return (
     <>
+      {/* Poussière — le métal s'effrite au point de gravure (fixe, sous la signature) */}
+      <Dust />
+
       {/* Signature — FIXE, centrée, SOUS le contenu (z-10) */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center px-6">
         <Image
@@ -109,12 +114,64 @@ export function HeroSignature({ src, alt, mobileSrc, sigSrc = "/brand/signature-
         <div
           ref={trailRef}
           className="pointer-events-none absolute inset-x-0 mx-auto w-[80vw] max-w-[700px] md:w-[46vw]"
-          style={{ top: 0, height: 0, ["--reveal" as string]: 0 }}
+          style={{ top: 0, height: 0 }}
         >
           <ScratchLines />
         </div>
       </section>
     </>
+  );
+}
+
+/* ============================================================
+   Dust — poussière qui se détache au point de gravure (centre écran).
+   Couche fixe (comme la signature), opacité pilotée par --reveal → la poussière
+   « monte » avec le scroll (le mur s'effrite), puis recouverte par le contenu.
+   Particules animées en CSS (transform/opacity) → GPU, perf mobile ok.
+   ============================================================ */
+
+const DUST = Array.from({ length: 22 }, (_, i) => {
+  const r = rng(i * 73 + 11);
+  return {
+    left: +(r() * 100).toFixed(1),
+    top: +(r() * 100).toFixed(1),
+    size: +(1 + r() * 2.4).toFixed(2),
+    delay: +(r() * 5).toFixed(2),
+    dur: +(3.5 + r() * 4.5).toFixed(2),
+    dx: +((r() * 2 - 1) * 18).toFixed(1),
+    dy: +(24 + r() * 50).toFixed(1),
+    peak: +(0.35 + r() * 0.45).toFixed(2),
+    brown: r() > 0.5,
+  };
+});
+
+function Dust() {
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-[15] flex items-center justify-center">
+      <div
+        className="relative h-[58vh] w-[88vw] max-w-[760px] md:w-[52vw]"
+        style={{ opacity: "var(--reveal, 0)" }}
+      >
+        {DUST.map((d, i) => (
+          <span
+            key={i}
+            className="dust-mote"
+            style={{
+              left: `${d.left}%`,
+              top: `${d.top}%`,
+              width: `${d.size}px`,
+              height: `${d.size}px`,
+              background: d.brown ? "rgba(150,120,80,0.9)" : "rgba(214,196,160,0.9)",
+              ["--dur" as string]: `${d.dur}s`,
+              ["--delay" as string]: `${d.delay}s`,
+              ["--dx" as string]: `${d.dx}px`,
+              ["--dy" as string]: `${d.dy}px`,
+              ["--peak" as string]: d.peak,
+            }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -140,9 +197,9 @@ function rng(seed: number) {
 
 // Rayure : part de (x, syVB) — le contour du glyphe — et DESCEND de LEN (viewBox),
 // avec une légère dérive latérale. (Descendre en viewBox = monter à l'écran.)
-function jaggedDown(x: number, syVB: number, jitter: number, rand: () => number) {
+function jaggedDown(x: number, syVB: number, jitter: number, rand: () => number, lm = 1) {
   const pts: [number, number][] = [[x, syVB]];
-  const end = syVB + LEN;
+  const end = syVB + LEN * lm;
   let y = syVB;
   let cx = x;
   while (y < end) {
@@ -157,7 +214,7 @@ function jaggedDown(x: number, syVB: number, jitter: number, rand: () => number)
 
 // fy = fraction du contour SUPÉRIEUR du glyphe (échantillonné depuis l'alpha).
 // w = épaisseur en UNITÉS viewBox (pas de non-scaling-stroke → reveal OK sur Safari).
-type SL = { x: number; fy: number; w: number; color: string; o: number; jit: number };
+type SL = { x: number; fy: number; w: number; color: string; o: number; jit: number; lm?: number };
 const LINES: SL[] = [
   // groupe gauche (bras montant)
   { x: 13, fy: 0.447, w: 0.34, color: "#94794f", o: 0.85, jit: 1.4 },
@@ -175,10 +232,16 @@ const LINES: SL[] = [
   { x: 31, fy: 0.159, w: 0.3, color: "#a88f5e", o: 0.62, jit: 1.4 },
   { x: 86, fy: 0.306, w: 0.3, color: "#6b4d2f", o: 0.68, jit: 1.4 },
   { x: 93, fy: 0.471, w: 0.28, color: "#94794f", o: 0.58, jit: 1.6 },
+  // égratinures courtes (scuffs) — fines, plus dispersées
+  { x: 22, fy: 0.3, w: 0.22, color: "#a88f5e", o: 0.55, jit: 2.0, lm: 0.32 },
+  { x: 38, fy: 0.1, w: 0.24, color: "#cdb78c", o: 0.6, jit: 1.8, lm: 0.38 },
+  { x: 58, fy: 0.09, w: 0.22, color: "#6b4d2f", o: 0.58, jit: 1.9, lm: 0.3 },
+  { x: 70, fy: 0.13, w: 0.24, color: "#a88f5e", o: 0.55, jit: 2.0, lm: 0.36 },
+  { x: 48, fy: 0.07, w: 0.2, color: "#94794f", o: 0.5, jit: 1.7, lm: 0.28 },
 ];
 
 const SCRATCHES = LINES.map((l, i) => ({
-  d: jaggedDown(l.x, l.fy * VB_H, l.jit, rng(i * 131 + 7)),
+  d: jaggedDown(l.x, l.fy * VB_H, l.jit, rng(i * 131 + 7), l.lm ?? 1),
   w: l.w,
   color: l.color,
   o: l.o,
