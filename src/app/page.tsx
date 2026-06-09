@@ -28,16 +28,18 @@ import { HeroSignature } from "@/components/HeroSignature";
  */
 
 const GRID_ORDER = [
-  "laced-salopette-raw-denim",
-  "boxer-pants-raw-denim-raw",
-  "fingerless-bomber-jacket-daim",
-  "strapped-army-jacket-raw-denim",
-  "bowed-wrap-skirt",
-  "patchwork-shirt-blue",
-  "fourmis-tee-shirt-light-grey",
-  "coeur-tee-shirt-pink",
-  "fourmis-longsleeve-light-grey",
-  "fourmis-tee-shirt-white",
+  "scarred-shirt-white",
+  "boxer-capri-white",
+  "tank-sweater-grey",
+  "boxer-capri-selvedge",
+  "tank-tee-white",
+  "boxer-mini-skirt-selvedge",
+  "layered-cardigan-grey",
+  "farrier-pants-kaki-copy",
+  "scarred-shirt-kaki",
+  "chino-joggers-blue",
+  "layered-cardigan-blue",
+  "chino-joggers-grey",
 ];
 
 export default function HomePage() {
@@ -84,12 +86,12 @@ export default function HomePage() {
               <Reveal className="order-2 flex flex-col justify-center gap-6 bg-ink px-[var(--spacing-gutter)] py-16 text-paper md:order-1 md:py-24">
                 <span className="eyebrow !text-paper/50">Capsule 1·1 — Edito</span>
                 <h2 className="display text-4xl md:text-5xl lg:text-6xl">
-                  {fr ? "Le dessin porté." : "The drawing, worn."}
+                  {fr ? "Le vêtement\ncomme atelier." : "Clothing as\natelier work."}
                 </h2>
                 <p className="max-w-sm text-paper/70">
                   {fr
-                    ? "FOURMIS, CŒUR — la pratique graphique de l'atelier, sérigraphiée à la main sur jersey lourd."
-                    : "FOURMIS, COEUR — the atelier's drawing practice, hand-screened on heavy jersey."}
+                    ? "Construction visible, matière brute — chaque pièce pensée comme un objet, fabriquée à la commande à Paris."
+                    : "Visible construction, raw material — each piece conceived as an object, made to order in Paris."}
                 </p>
                 <Link href="/collections/capsule-1-1-edito" className="label-caps link-underline self-start !text-paper">
                   {fr ? "Découvrir" : "Discover more"} →
