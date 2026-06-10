@@ -13,18 +13,11 @@ import { HeroSignature } from "@/components/HeroSignature";
 
 /**
  * Home — hiérarchie alignée sur j4spar.com :
- *  1. Hero (image métallique) + SIGNATURE fixe
+ *  1. Hero (fond métallique + signature bronze centrée) — cf. HeroSignature
  *  2. SAISON TROIS — grille produits
  *  3. CAPSULE 1·1 EDITO
  *  4. Manifeste « Our vision of fashion is established beyond clothing »
  *  5. F&F List
- *
- * Effet signature (demandé) : la signature est `position: fixed`, toujours
- * centrée à l'écran, à un z-index SOUS le contenu et AU-DESSUS du hero.
- *   z : hero (z-0)  <  signature fixe (z-10)  <  contenu (z-20)
- * → en haut elle est posée sur l'image du hero ; au scroll le hero défile et
- *   le contenu opaque remonte PAR-DESSUS elle → elle passe « sous tout le site »
- *   dès qu'elle dépasse son background de hero. Scroll natif, aucun pin.
  */
 
 const GRID_ORDER = [
@@ -49,14 +42,14 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ── 1. Hero — image métallique + signature fixe + traînée (z-0 / z-10) ── */}
+      {/* ── 1. Hero — fond métallique + signature bronze centrée ── */}
       <HeroSignature
-        src="/media/campaign/hero.webp"
+        src="/media/campaign/hero-fond.webp"
         alt="JASPÄR Saison Trois"
-        mobileSrc="/media/campaign/hero-mobile.webp"
+        mobileSrc="/media/campaign/hero-fond-mobile.webp"
       />
 
-      {/* ── Contenu — AU-DESSUS de la signature (z-20), fond opaque ── */}
+      {/* ── Contenu ── */}
       <div className="relative z-20 bg-paper">
         {/* 2. SAISON TROIS — grille produits */}
         <Section>
