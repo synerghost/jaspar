@@ -23,7 +23,7 @@ export function HeroSignature({
   src,
   alt,
   mobileSrc,
-  sigSrc = "/brand/signature-rotten.webp",
+  sigSrc = "/brand/signature-metal.webp",
 }: Props) {
   return (
     <section
@@ -56,8 +56,8 @@ export function HeroSignature({
         <Image
           src={sigSrc}
           alt="JASPÄR"
-          width={1701}
-          height={936}
+          width={927}
+          height={492}
           priority
           sizes="(min-width:768px) 46vw, 80vw"
           className="h-auto w-[80vw] max-w-[700px] object-contain md:w-[46vw]"
