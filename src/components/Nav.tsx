@@ -40,9 +40,10 @@ export function Nav() {
     <header
       className={clsx(
         "sticky top-0 z-50 transition-all duration-400",
+        // Verre dépoli translucide : on voit le fond de la hero à travers.
         scrolled
-          ? "border-b border-ink/10 bg-paper/90 backdrop-blur-md"
-          : "border-b border-transparent bg-paper/70 backdrop-blur-sm",
+          ? "border-b border-ink/10 bg-paper/55 backdrop-blur-xl backdrop-saturate-150"
+          : "border-b border-white/15 bg-paper/20 backdrop-blur-xl backdrop-saturate-150",
       )}
     >
       <nav
